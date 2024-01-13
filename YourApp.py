@@ -15,7 +15,7 @@ class YourApp:
         st.markdown(map_html, unsafe_allow_html=True)
 
     def run_web_app(self):
-        st.set_page_config(page_title="Your App", page_icon=":earth_americas:")
+        # st.set_page_config(page_title="Your App", page_icon=":earth_americas:")
 
         # Your existing app code goes here...
 

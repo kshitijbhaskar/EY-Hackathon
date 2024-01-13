@@ -113,7 +113,7 @@ class AnalyticsPage:
 
         # Line plot for selling rate in Excel sheet
         plt.subplot(2, 1, 2)
-        sns.lineplot(x="item_name", y="Selling Rate", data=df_excel)
+        sns.lineplot(x="Product Number", y="Selling Rate", data=df_excel)
 
         # Display the plots vertically
         st.pyplot(plt)
@@ -583,10 +583,10 @@ class PersonalisedMarketing:
             self.generate_marketing_programs()
 
 def main():
-    analytics_app = YourApp()
-    analytics_app.run_web_app()
     create_database()  # Make sure the database is created before using it
     st.set_page_config(page_title="Sky: Inventory Management System", page_icon=":bar_chart:")
+    analytics_app = YourApp()
+    analytics_app.run_web_app()
 
     st.sidebar.title("Options")
     selected_option = st.sidebar.radio("", ["Analytics","Modify Inventory", "Smart Suggest", "Restocking Alert", "AI Negotiator", "Personalised Marketing"])
