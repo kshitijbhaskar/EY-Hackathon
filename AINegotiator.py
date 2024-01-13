@@ -1,5 +1,3 @@
-# AINegotiator.py
-
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
@@ -68,19 +66,37 @@ class AINegotiator:
                     "message": f"Example Message for {item}",
                     "price": 100 + i * 10,
                     "shipping_charges": 10 + i * 2,
-                    "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d")
+                    "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
+                    "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
+                    "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
                 })
             st.session_state['df1'] = pd.read_excel('negotiation details table.xlsx')
             st.success("Message sent successfully!")
 
     def display_negotiator(self):
         st.header("Negotiator")
+        map_data = {'LAT': [28.6278], 'LON': [77.2190]}  # Fixed coordinates for the map
+        st.header("Negotiator")
+        # Initialize with a DataFrame containing column names 'lat' and 'lon' to match Streamlit's requirements.
+        map_data = pd.DataFrame({
+            'lat': [28.6278], 
+            'lon': [77.2190]
+        })
+
+        # Additional coordinates to be plotted should be appended to this DataFrame.
         for response in st.session_state['responses1']:
             with st.expander(f"From: {response['wholesaler_name']}", expanded=True):
-                st.write(f"Message: {response['message']}")
-                st.write(f"Price: {response['price']}")
-                st.write(f"Shipping Charges: {response['shipping_charges']}")
-                st.write(f"Delivery Date: {response['delivery_date']}")
+                # Your response details display logic...
+
+                # Add response coordinates to the map data.
+                if 'latitude' in response and 'longitude' in response:
+                    map_data = map_data.append({'lat': response['latitude'], 'lon': response['longitude']}, ignore_index=True)
+        
+        # Now, display the map with all the coordinates included.
+        st.map(map_data)
+
+        # ...Rest of the code below...
+
         st.subheader("Negotiation Details Table")
         st.write(st.session_state['df1'])
         if st.button("Negotiate Deal"):
@@ -91,19 +107,29 @@ class AINegotiator:
                     "message": f"Example Message for {item}",
                     "price": 100 + i * 10,
                     "shipping_charges": 10 + i * 2,
-                    "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d")
+                    "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
+                    "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
+                    "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
                 })
+                map_data['LAT'].append(response['latitude'])
+                map_data['LON'].append(response['longitude'])
             st.session_state['df2'] = pd.read_excel('best deal table.xlsx')
+            
             st.success("Deal negotiated successfully!")
 
     def display_best_deal(self):
         st.header("Best Deal")
+        map_data = {'LAT': [28.6278], 'LON': [77.2190]}  # Fixed coordinates for the map
+        st.map(map_data)  # Use st.map with the fixed map data
         for response in st.session_state['responses2']:
             with st.expander(f"From: {response['wholesaler_name']}", expanded=True):
                 st.write(f"Message: {response['message']}")
                 st.write(f"Price: {response['price']}")
                 st.write(f"Shipping Charges: {response['shipping_charges']}")
                 st.write(f"Delivery Date: {response['delivery_date']}")
+                if 'latitude' in response and 'longitude' in response:
+                    map_data['LAT'].append(response['latitude'])
+                    map_data['LON'].append(response['longitude'])
         st.subheader("Best Deal Table")
         st.write(st.session_state['df2'])
 

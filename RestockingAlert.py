@@ -1,19 +1,18 @@
-import sqlite3
+import pandas as pd
 import streamlit as st
+import matplotlib.pyplot as plt
 
 class RestockingAlert:
 
-    def fetch_data_from_database(self, sku_id):
-        # for this we have to use different database that also contains sell_rate
-        conn = sqlite3.connect("inventory.db")
-        cursor = conn.cursor()
+    def fetch_data_from_excel(self, SKU_ID, analytics_df):
+        # Filter the dataframe based on SKU_ID
+        item_data = analytics_df[analytics_df['SKU_ID'] == SKU_ID]
+        
+        # Extract selling rate and current stock (quantity)
+        selling_rate = item_data['Selling Rate'].values[0]
+        current_stock = item_data['Stock in Inventory(In KG for GROCERY)'].values[0]
 
-        cursor.execute("SELECT sell_rate, quantity FROM items WHERE sku_id=?", (sku_id,))
-        result = cursor.fetchone()
-
-        conn.close()
-
-        return result
+        return selling_rate, current_stock
 
     @staticmethod
     def calculate_time_to_last(selling_rate, current_stock):
@@ -25,26 +24,45 @@ class RestockingAlert:
 
     def run_web_app(self):
         st.title("Inventory Management System - Restocking Alert")
+        st.subheader("The following stocks need urgent restocking as they will last for less than 5 days")
 
-        for sku_id in self.get_sku_units_needing_restock():
-            st.warning(f"Urgent Restocking Alert: SKU Unit {sku_id} needs restocking!")
+        # Read data from analytics.xlsx
+        analytics_df = pd.read_excel("analytics.xlsx")
 
-    def get_sku_units_needing_restock(self):
-        conn = sqlite3.connect("inventory.db")
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT sku_id FROM items")
-        sku_units = cursor.fetchall()
-
-        items_needing_restock = []
-        for sku_id in sku_units:
-            selling_rate, current_stock = self.fetch_data_from_database(sku_id[0])
-            # fetch selling rate, current stock (quantity) from database
+        for SKU_ID in self.get_sku_units_needing_restock(analytics_df):
+            selling_rate, current_stock = self.fetch_data_from_excel(SKU_ID, analytics_df)
             time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
 
-            if time_to_last < 6:
-                items_needing_restock.append(sku_id[0])
+            st.warning(f"Urgent Restocking Alert: {SKU_ID} needs restocking! "
+                       f"Current stock can last for {time_to_last:.2f} days.")
 
-        conn.close()
+        # Plotting selling rates and buying rates
+        fig, ax = self.plot_rates(analytics_df)
+        st.pyplot(fig)
+
+    def get_sku_units_needing_restock(self, analytics_df):
+        items_needing_restock = []
+
+        for SKU_ID in analytics_df['SKU_ID']:
+            selling_rate, current_stock = self.fetch_data_from_excel(SKU_ID, analytics_df)
+            time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
+
+            if time_to_last < 5:
+                items_needing_restock.append(SKU_ID)
 
         return items_needing_restock
+
+    @staticmethod
+    def plot_rates(analytics_df):
+        # Plotting selling rates and buying rates
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(analytics_df['SKU_ID'], analytics_df['Selling Rate'], label='Selling Rate', marker='o')
+        ax.plot(analytics_df['SKU_ID'], analytics_df['Buying Rate'], label='Buying Rate', marker='o')
+
+        ax.set_title('Selling and Buying Rates Over SKU Units')
+        ax.set_xlabel('SKU Unit')
+        ax.set_ylabel('Rate')
+        ax.legend()
+        ax.grid(True)
+
+        return fig, ax
