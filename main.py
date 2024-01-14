@@ -6,6 +6,8 @@ from AnalyticsPage import AnalyticsPage
 from ModifyInventory import ModifyInventory
 from SmartSuggest import SmartSuggest
 from RestockingAlert import RestockingAlert
+from ChatBot import ChatBot
+from FigmaUI import FigmaUI
 import sqlite3
 
 def create_database():
@@ -32,7 +34,7 @@ def main():
 
     st.sidebar.title("Options")
     selected_option = st.sidebar.radio("", ["Analytics", "Modify Inventory", "Smart Suggest", "Restocking Alert",
-                                            "AI Negotiator", "Personalised Marketing"])
+                                            "AI Negotiator", "Personalised Marketing", "ChatBot", "FigmaUI"])
 
     if selected_option == "Analytics":
         analytics_page = AnalyticsPage()
@@ -52,6 +54,12 @@ def main():
     elif selected_option == "Personalised Marketing":
         personalised_marketing = PersonalisedMarketing()
         personalised_marketing.run_web_app()
+    elif selected_option == "ChatBot":
+        chat_bot = ChatBot()
+        chat_bot.run_web_app()
+    elif selected_option == "FigmaUI":
+        figma_ui = FigmaUI()
+        figma_ui.run_web_app()
 
 if __name__ == "__main__":
     main()
