@@ -1,5 +1,5 @@
 import streamlit as st
-from YourApp import YourApp
+# from YourApp import YourApp
 from AINegotiator import AINegotiator
 from PersonalisedMarketing import PersonalisedMarketing
 from AnalyticsPage import AnalyticsPage
