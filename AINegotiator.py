@@ -2,22 +2,152 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
 
+# Assumed fixed wholesaler details
+WHOLESALE_DATA = pd.DataFrame([
+    {
+        "wholesaler_name": "Wholesaler A",
+        "latitude": 28.7041,
+        "longitude": 77.1025,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler B",
+        "latitude": 28.5,
+        "longitude": 77.0,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler C",
+        "latitude": 28.6,
+        "longitude": 77.1,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.7,
+        "longitude": 77.2,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.723,
+        "longitude": 77.213,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.527,
+        "longitude": 77.212,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.7556,
+        "longitude": 77.2235,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.72,
+        "longitude": 77.21431,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.732,
+        "longitude": 77.2,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.7,
+        "longitude": 77.2213,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.755,
+        "longitude": 77.2,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.7232,
+        "longitude": 77.2,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.7,
+        "longitude": 77.21,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    },
+    {
+        "wholesaler_name": "Wholesaler D",
+        "latitude": 28.87,
+        "longitude": 77.12,
+        "reply_message": "",
+        "offer": {},
+        "shipping_charges": 0,
+        "delivery_date": ""
+    }
+])
+
 class AINegotiator:
     def __init__(self):
         self.user = "*User*"
 
-        if 'responses1' not in st.session_state:
-            st.session_state['responses1'] = []
-        if 'responses2' not in st.session_state:
-            st.session_state['responses2'] = []
+        # if 'responses1' not in st.session_state:
+        #     st.session_state['responses1'] = []
+        # if 'responses2' not in st.session_state:
+        #     st.session_state['responses2'] = []
         if 'items' not in st.session_state:
             st.session_state['items'] = ""
         if 'quantities' not in st.session_state:
             st.session_state['quantities'] = {}
         if 'df1' not in st.session_state:
-            st.session_state['df1'] = pd.DataFrame()
+            st.session_state['df1'] = pd.read_excel('item_deals.xlsx', sheet_name='Initial')
         if 'df2' not in st.session_state:
-            st.session_state['df2'] = pd.DataFrame()
+            st.session_state['df2'] = pd.read_excel('item_deals.xlsx', sheet_name='Initial')
 
     def run_web_app(self):
         st.title("AI Negotiator")
@@ -59,77 +189,80 @@ class AINegotiator:
             st.text_area("Message Template", template, height=200)
 
         if st.button("Send Message"):
-            item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
-            for i, item in enumerate(item_list, start=1):
-                st.session_state['responses1'].append({
-                    "wholesaler_name": f"Wholesaler {i}",
-                    "message": f"Example Message for {item}",
-                    "price": 100 + i * 10,
-                    "shipping_charges": 10 + i * 2,
-                    "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
-                    "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
-                    "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
-                })
-            st.session_state['df1'] = pd.read_excel('negotiation details table.xlsx')
+            # item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
+            # for i, item in enumerate(item_list, start=1):
+            #     st.session_state['responses1'].append({
+            #         "wholesaler_name": f"Wholesaler {i}",
+            #         "message": f"Example Message for {item}",
+            #         "price": 100 + i * 10,
+            #         "shipping_charges": 10 + i * 2,
+            #         "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
+            #         "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
+            #         "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
+            #     })
+            st.session_state['df1'] = pd.read_excel('item_deals.xlsx', sheet_name='Updated')
             st.success("Message sent successfully!")
 
     def display_negotiator(self):
         st.header("Negotiator")
-        map_data = {'LAT': [28.6278], 'LON': [77.2190]}  # Fixed coordinates for the map
-        st.header("Negotiator")
-        # Initialize with a DataFrame containing column names 'lat' and 'lon' to match Streamlit's requirements.
-        map_data = pd.DataFrame({
-            'lat': [28.6278], 
-            'lon': [77.2190]
-        })
-
-        # Additional coordinates to be plotted should be appended to this DataFrame.
-        for response in st.session_state['responses1']:
-            with st.expander(f"From: {response['wholesaler_name']}", expanded=True):
-                # Your response details display logic...
-
-                # Add response coordinates to the map data.
-                if 'latitude' in response and 'longitude' in response:
-                    map_data = map_data.append({'lat': response['latitude'], 'lon': response['longitude']}, ignore_index=True)
-        
-        # Now, display the map with all the coordinates included.
+        map_data = {'LAT': WHOLESALE_DATA['latitude'].tolist(), 'LON': WHOLESALE_DATA['longitude'].tolist()}
         st.map(map_data)
 
-        # ...Rest of the code below...
+        wholesaler_data = pd.read_excel('wholesaler_deal.xlsx', sheet_name='Updated')
+
+        # Display wholesaler details cards
+        for index, wholesaler in wholesaler_data.iterrows():
+            with st.expander(f"Wholesaler: {wholesaler['wholesaler_name']}", expanded=True):
+                st.write(f"Latitude: {wholesaler['latitude']}")
+                st.write(f"Longitude: {wholesaler['longitude']}")
+                st.write(f"Reply Message: {wholesaler['reply_message']}")
+                st.write(f"Item1 Offer: {wholesaler['item1 offer']}")
+                st.write(f"Item2 Offer: {wholesaler['item2 offer']}")
+                st.write(f"Item3 Offer: {wholesaler['item3 offer']}")
+                st.write(f"Item4 Offer: {wholesaler['item4 offer']}")
+                st.write(f"Item5 Offer: {wholesaler['item5 offer']}")
+                st.write(f"Shipping Charges: {wholesaler['shipping_charges']}")
+                st.write(f"Delivery Date: {wholesaler['delivery_date']}")
 
         st.subheader("Negotiation Details Table")
         st.write(st.session_state['df1'])
         if st.button("Negotiate Deal"):
-            item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
-            for i, item in enumerate(item_list, start=1):
-                st.session_state['responses2'].append({
-                    "wholesaler_name": f"Wholesaler {i}",
-                    "message": f"Example Message for {item}",
-                    "price": 100 + i * 10,
-                    "shipping_charges": 10 + i * 2,
-                    "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
-                    "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
-                    "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
-                })
-                map_data['LAT'].append(response['latitude'])
-                map_data['LON'].append(response['longitude'])
-            st.session_state['df2'] = pd.read_excel('best deal table.xlsx')
-            
+            # item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
+            # for i, item in enumerate(item_list, start=1):
+            #     st.session_state['responses2'].append({
+            #         "wholesaler_name": f"Wholesaler {i}",
+            #         "message": f"Example Message for {item}",
+            #         "price": 100 + i * 10,
+            #         "shipping_charges": 10 + i * 2,
+            #         "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
+            #         "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
+            #         "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
+            #     })
+            #     map_data['LAT'].append(response['latitude'])
+            #     map_data['LON'].append(response['longitude'])
+            # st.session_state['df2'] = pd.read_excel('best deal table.xlsx')
+            st.session_state['df2'] = pd.read_excel('item_deals.xlsx', sheet_name='Updated')
             st.success("Deal negotiated successfully!")
 
     def display_best_deal(self):
         st.header("Best Deal")
-        map_data = {'LAT': [28.6278], 'LON': [77.2190]}  # Fixed coordinates for the map
-        st.map(map_data)  # Use st.map with the fixed map data
-        for response in st.session_state['responses2']:
-            with st.expander(f"From: {response['wholesaler_name']}", expanded=True):
-                st.write(f"Message: {response['message']}")
-                st.write(f"Price: {response['price']}")
-                st.write(f"Shipping Charges: {response['shipping_charges']}")
-                st.write(f"Delivery Date: {response['delivery_date']}")
-                if 'latitude' in response and 'longitude' in response:
-                    map_data['LAT'].append(response['latitude'])
-                    map_data['LON'].append(response['longitude'])
+        map_data = {'LAT': WHOLESALE_DATA['latitude'].tolist(), 'LON': WHOLESALE_DATA['longitude'].tolist()}
+        st.map(map_data)
+        wholesaler_data = pd.read_excel('wholesaler_deal.xlsx', sheet_name='Updated')
+
+        # Display wholesaler details cards
+        for index, wholesaler in wholesaler_data.iterrows():
+            with st.expander(f"Wholesaler: {wholesaler['wholesaler_name']}", expanded=True):
+                st.write(f"Latitude: {wholesaler['latitude']}")
+                st.write(f"Longitude: {wholesaler['longitude']}")
+                st.write(f"Reply Message: {wholesaler['reply_message']}")
+                st.write(f"Item1 Offer: {wholesaler['item1 offer']}")
+                st.write(f"Item2 Offer: {wholesaler['item2 offer']}")
+                st.write(f"Item3 Offer: {wholesaler['item3 offer']}")
+                st.write(f"Item4 Offer: {wholesaler['item4 offer']}")
+                st.write(f"Item5 Offer: {wholesaler['item5 offer']}")
+                st.write(f"Shipping Charges: {wholesaler['shipping_charges']}")
+                st.write(f"Delivery Date: {wholesaler['delivery_date']}")
         st.subheader("Best Deal Table")
         st.write(st.session_state['df2'])
 
