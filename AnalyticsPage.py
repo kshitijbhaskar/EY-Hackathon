@@ -1,86 +1,151 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.colors as mcolors
+import plotly.express as px
 import seaborn as sns
 
 class AnalyticsPage:
     def __init__(self):
-        pass
+        self.sheet_name = 'SKU & TimeSeries.csv'
+        self.df = pd.read_csv(self.sheet_name)
+        self.df_sales_single_year = pd.read_csv(self.sheet_name)
 
-    def display_analytics(self):
-        st.header("Analytics")
+    def convert_date_to_day_of_week(self):
+        self.df_sales_single_year['Date'] = pd.to_datetime(self.df_sales_single_year['Date'])
+        self.df_sales_single_year['Day_of_Week'] = self.df_sales_single_year['Date'].dt.day_name()
 
-        # Load data from SQLite database
-        conn = sqlite3.connect("inventory.db")
-        df_sql = pd.read_sql_query("SELECT * FROM items", conn)
-        conn.close()
+    def display_bar_graph_dates(self):
+        # Assuming 'Date' and 'CATEGORY' columns are present in the dataset
+        df_sales_single_year = pd.read_csv(self.sheet_name)
 
-        # Load data from Excel sheet
-        df_excel = pd.read_excel("analytics.xlsx")
+        # Convert 'Date' to datetime format
+        df_sales_single_year['Date'] = pd.to_datetime(df_sales_single_year['Date'])
 
-        # Display basic statistics
-        st.subheader("Basic Statistics for SQLite Database")
-        st.write(df_sql.describe())
+        # Group by 'Date' and 'Sub-Category', sum the 'Amount'
+        df_plot_sc = df_sales_single_year[['Date', 'CATEGORY', 'Amount']].groupby(['Date', 'CATEGORY']).agg({'Amount': 'sum'}).rename(columns={'Amount': 'Total Sales'}).reset_index()
 
-        st.subheader("Basic Statistics for Excel Sheet")
-        st.write(df_excel.describe())
+        # Streamlit app
+        st.title(f'Item Sales by Date')
 
-        # Visualize data using plots
+        # Plot the interactive bar chart using Plotly Express with custom styling
+        fig = px.bar(df_plot_sc, x='Date', y='Total Sales', color="CATEGORY", title='Item Sales by Date',
+                    category_orders={'CATEGORY': ['HOME UTILITIES', 'GROCERY', 'Other']},  # Specify category order
+                    labels={'Total Sales': 'Amount'},  # Rename y-axis label
+                    color_discrete_map={'HOME UTILITIES': '#1f78b4', 'GROCERY': '#33a02c', 'Other': '#e31a1c'},  # Custom color scheme
+                    )
+        fig.update_layout(bargap=0.1, bargroupgap=0.1, height=600, width=900, showlegend=True, legend_title_text='Category')
+        fig.update_traces(marker_line_color='black', marker_line_width=1.5)  # Add borders to bars
 
-        # Arrange plots horizontally
+        st.plotly_chart(fig)
 
-        # Bar plot for quantity of items in SQLite database
-        st.subheader("Bar Plot: Quantity of Items in SQLite Database")
-        plt.subplot(1, 2, 1)
-        sns.barplot(x="item_name", y="quantity", data=df_sql)
-        plt.xticks(rotation=45, ha="right")
+    def display_line_graph(self):
+        df_time = pd.read_csv('Inventory.csv')  
 
-        # Scatter plot for buy price and sell price in Excel sheet
-        plt.subplot(1, 2, 2)
-        sns.scatterplot(x="Buying Rate", y="Selling Rate", data=df_excel)
+        df_plot = df_time.groupby('SKU_ID').agg({'Selling Rate': 'mean', 'Buying Rate': 'mean'}).reset_index().sort_values(by='SKU_ID', ascending=True)
 
-        # Display the plots horizontally
-        st.pyplot(plt)
+        fig = px.line(df_plot, x="SKU_ID", y=["Selling Rate", "Buying Rate"],
+                      title='Selling Rate and Buying Rate by SKU_ID')
+        st.plotly_chart(fig)
 
-        # Add some space
-        st.write("\n")
+    def display_bar_graph(self):
+        self.convert_date_to_day_of_week()
 
-        # Arrange plots vertically
+        df_plot_dow = self.df_sales_single_year[['Day_of_Week', 'CATEGORY', 'Amount']].groupby(['Day_of_Week', 'CATEGORY']).agg({'Amount': 'sum'}).rename(columns={'Amount': 'Total Sales'}).reset_index()
 
-        # Line plot for buying rate in SQLite database
-        st.subheader("Line Plot: Buying Rate in SQLite Database")
-        plt.subplot(2, 1, 1)
-        sns.lineplot(x="item_name", y="buy_price", data=df_sql)
-        plt.xticks(rotation=45, ha="right")
+        st.title(f'Item Sales by Day of Week')
 
-        # Line plot for selling rate in Excel sheet
-        plt.subplot(2, 1, 2)
-        sns.lineplot(x="Product Number", y="Selling Rate", data=df_excel)
+        fig = px.bar(df_plot_dow, x='Day_of_Week', y='Total Sales', color="CATEGORY", title='Item Sales by Day of Week',
+                     category_orders={'Day_of_Week': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']},
+                     labels={'Total Sales': 'Amount'},
+                     color_discrete_map={'HOME UTILITIES': '#1f78b4', 'GROCERY': '#33a02c', 'Other': '#e31a1c'},
+                     )
+        fig.update_layout(bargap=0.1, bargroupgap=0.1, height=600, width=900, showlegend=True, legend_title_text='Category')
+        fig.update_traces(marker_line_color='black', marker_line_width=1.5)
+        st.plotly_chart(fig)
 
-        # Display the plots vertically
-        st.pyplot(plt)
+    @staticmethod
+    def autopct_format(values):
+        def autopct_format(pct):
+            total = sum(values)
+            val = int(round(pct * total / 100.0))
+            return '{p:.1f}%'.format(p=pct) if pct > 2 else ''
+        return autopct_format
 
-        # Add some space
-        st.write("\n")
+    def display_pie_chart(self):
+        dataset = pd.read_csv('SKU & TimeSeries.csv')
+        inventory_dataset = pd.read_csv('Inventory.csv')
+        df = pd.DataFrame(dataset)
+        dataset['Name_of_Product'] = np.where((df['SKU_ID'] == 'PER1001'), 'Deodorant',
+                                            np.where((df['SKU_ID'] == 'PER1002'), 'Toothbrush',
+                                                        np.where((df['SKU_ID'] == 'PER1003'), 'Lotion',
+                                                                np.where((df['SKU_ID'] == 'PER1004'), 'Serum',
+                                                                        np.where((df['SKU_ID'] == 'PER1005'), 'Razor',
+                                                                                np.where((df['SKU_ID'] == 'PER1006'), 'Hydrator',
+                                                                                            np.where((df['SKU_ID'] == 'PER1007'), 'Moisturizer',
+                                                                                                    np.where((df['SKU_ID'] == 'GRO1008'), 'Papad',
+                                                                                                            np.where((df['SKU_ID'] == 'GRO1009'), 'Ghee',
+                                                                                                                    np.where((df['SKU_ID'] == 'GRO1010'), 'Paneer',
+                                                                                                                                np.where((df['SKU_ID'] == 'GRO1011'), 'Moong Dal',
+                                                                                                                                        np.where((df['SKU_ID'] == 'GRO1012'), 'Basmati Rice',
+                                                                                                                                                np.where((df['SKU_ID'] == 'GRO1013'), 'Masale',
+                                                                                                                                                        np.where((df['SKU_ID'] == 'GRO1014'), 'Bread',
+                                                                                                                                                                    np.where((df['SKU_ID'] == 'HOM1015'), 'Clock',
+                                                                                                                                                                            np.where((df['SKU_ID'] == 'HOM1016'), 'Blender',
+                                                                                                                                                                                    np.where((df['SKU_ID'] == 'HOM1017'), 'Bath Towel',
+                                                                                                                                                                                            np.where((df['SKU_ID'] == 'HOM1018'), 'Pillow',
+                                                                                                                                                                                                        np.where((df['SKU_ID'] == 'HOM1019'), 'Utensils',
+                                                                                                                                                                                                                np.where((df['SKU_ID'] == 'HOM1020'), 'Bedsheet',
+                                                                                                                                                                                                                        'Water Bottle'))))))))))))))))))))
+        topcat_subcat = dataset.groupby(['CATEGORY', 'Name_of_Product']).agg({'Amount': 'sum'}).sort_values(
+            by="Amount", ascending=False)[:21]
+        topcat_subcat = topcat_subcat[["Amount"]].astype(int)
+        topcat_subcat = topcat_subcat.sort_values("CATEGORY")
+        topcat_subcat.reset_index(inplace=True)
+        topcat_subcat_1 = topcat_subcat.groupby(['CATEGORY']).agg({'Amount': 'sum'})
+        topcat_subcat_1.reset_index(inplace=True)
 
-        # Arrange three plots horizontally
+        total_revenue = dataset['Amount'].sum()
 
-        # Histogram for quantity in SQLite database
-        st.subheader("Histogram: Quantity in SQLite Database")
-        plt.subplot(1, 3, 1)
-        plt.hist(df_sql['quantity'], bins=20, color='skyblue', edgecolor='black')
+        plt.rcParams["figure.figsize"] = (36, 36)
+        fig, ax = plt.subplots()
+        ax.axis('equal')
+        width = 0.1
+        outer_colors = ['#e57101', '#008062', '#961c2f']
+        gradient_colors = ['#ffd1a4', '#febe80', '#feac5c', "#feac5c", "#fe9c3e", "#fe8b1c", '#FE840E',
+                        '#9bffe8', '#43ffd3', '#00e9b3', "#00bc91", "#00a680", '#009B77', "#00906f",
+                        '#eda1ad', '#e88695', '#e47385', '#e16175', "#da3a53", "#d62944", '#c4253e']
+        darkened_colors = []
+        for color in gradient_colors:
+            rgb_values = mcolors.hex2color(color)
+            darkened_rgb = [max(0, value - 0.125) for value in rgb_values]  # Reduce each RGB component by 0.2
+            darkened_hex = mcolors.rgb2hex(darkened_rgb)
+            darkened_colors.append(darkened_hex)
+        inner_colors = darkened_colors
+        ax.pie(topcat_subcat_1['Amount'], radius=1, labels=topcat_subcat_1['CATEGORY'], colors=outer_colors,
+            wedgeprops=dict(edgecolor='w'), textprops={'fontsize': 30, 'color': 'white', 'weight': 'bold'})
+        pie2 = ax.pie(topcat_subcat['Amount'], radius=1 - (width / 2), labels=topcat_subcat['Name_of_Product'],
+              autopct=self.autopct_format(topcat_subcat['Amount']), labeldistance=0.7, colors=inner_colors,
+              wedgeprops=dict(edgecolor='w'), pctdistance=0.57, rotatelabels=True,
+              textprops={'fontsize': 30, 'color': 'white', 'weight': 'bold'})
 
-        # Box plot for buying rate in Excel sheet
-        plt.subplot(1, 3, 2)
-        sns.boxplot(x=df_excel['Buying Rate'])
+        fraction_text_list = pie2[2]
+        for text in fraction_text_list:
+            text.set_rotation(315)
+        centre_circle = plt.Circle((0, 0), 0.6, fc='black')  # Set the background color to black
+        fig = plt.gcf()
+        fig.gca().add_artist(centre_circle)
+        ax.annotate('Total Revenue \n ₹' + str(total_revenue), color='white', xy=(0, 0), fontsize=75, ha="center",
+                    bbox=dict(boxstyle='round', facecolor='black', edgecolor='none'))  # Set the background color to black
 
-        # Violin plot for selling rate in Excel sheet
-        plt.subplot(1, 3, 3)
-        sns.violinplot(x=df_excel['Selling Rate'], color='salmon')
+        fig.patch.set_alpha(0.0)  # Set the background color of the entire figure to black
 
-        # Display the three plots horizontally
-        st.pyplot(plt)
+        st.pyplot(fig)
 
     def run_web_app(self):
-        self.display_analytics()
+        self.display_line_graph()
+        self.display_pie_chart()
+        self.display_bar_graph()
+        self.display_bar_graph_dates()
+

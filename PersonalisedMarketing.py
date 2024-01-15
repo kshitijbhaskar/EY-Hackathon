@@ -57,19 +57,22 @@ def calculate_days_since_last_visit(last_visit_date):
     current_date = get_current_date()
     return (current_date - last_visit_date).days
 
-# Function to display data table from Excel file
-def display_data_table(file_path, key):
-    df = pd.read_excel(file_path)
-    st.table(df)
-
-    if st.button("Send message to customers", key=key ,type="primary"):
-        response = final_message(messages_1, temperature=1)
-        subprocess.run(["python", "whatsapp_sender.py", '+919302389149', response, '6', '0'])
 
 
 class PersonalisedMarketing:
     def __init__(self):
         pass
+    # Function to display data table from Excel file
+    def display_data_table(self, file_path, sheet_name, key):
+        df = pd.read_excel(file_path, sheet_name)
+        st.table(df)
+
+        if st.button("Send message to customers", key=key ,type="primary"):
+            response = final_message(messages_1, temperature=1)
+            subprocess.run(["python", "whatsapp_sender.py", '+919302389149', response, '6', '0'])
+            st.success("Messages Sent!")
+            if st.button("Back"):
+                pass
 
     def display_customer_segments(self):
         st.header("Customer Segments")
@@ -127,30 +130,31 @@ class PersonalisedMarketing:
         for occasion, date_str in occasions_suggestions.items():
             date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
             with st.expander(f"{occasion} - {date.strftime('%Y-%m-%d')}"):
-                display_data_table('temp.xlsx', f"{occasion} - {date.strftime('%Y-%m-%d')}")
+                self.display_data_table('Profiles.xlsx','Sheet1',f"{occasion} - date: {date}")
 
     def display_deadstock_suggestions(self):
-        st.subheader("Deadstock Suggestions:")
-        deadstock_suggestions = {
-            "Kurta": 50,
-            "Sherwani": 30,
-            "Tuxedo": 20
-        }
+        stock_data = pd.read_excel('stock.xlsx')
+
+        # Create a dictionary from the two columns in the DataFrame
+        deadstock_suggestions = dict(zip(stock_data['Item'], stock_data['Stock']))
         for item, stock in deadstock_suggestions.items():
             with st.expander(f"{item} - Stock: {stock}"):
-                display_data_table('temp.xlsx',f"{item} - Stock: {stock}")
+                self.display_data_table('Profiles.xlsx','Sheet1',f"{item} - Stock: {stock}")
 
     def display_retention_suggestions(self):
         st.subheader("Retention Suggestions:")
-        retention_suggestions = {
-            "Dewansh Assawa": "2024-01-01",
-            "Rakesh": "2024-02-15",
-            "Kshitij": "2024-03-20"
-        }
-        for customer, last_visit_date_str in retention_suggestions.items():
-            last_visit_date = datetime.datetime.strptime(last_visit_date_str, "%Y-%m-%d").date()
-            with st.expander(f"{customer} - Last Visit: {last_visit_date.strftime('%Y-%m-%d')}, Days Since Last Visit: {calculate_days_since_last_visit(last_visit_date)}"):
-                display_data_table('temp.xlsx',f"{customer} - Last Visit: {last_visit_date.strftime('%Y-%m-%d')}, Days Since Last Visit: {calculate_days_since_last_visit(last_visit_date)}")
+        with st.expander("Last Visited Customers"):
+                df = pd.read_excel('Profiles.xlsx', 'Sheet2')
+                if "Last Purchase Date" in df.columns:
+                    df["Last Purchase Date"] = pd.to_datetime(df["Last Purchase Date"]).dt.date.astype(str)
+                st.table(df)
+                if st.button("Send message to customers",type="primary"):
+                    response = final_message(messages_1, temperature=1)
+                    subprocess.run(["python", "whatsapp_sender.py", '+919302389149', response, '6', '0'])
+                    st.success("Messages Sent!")
+                    if st.button("Back"):
+                        pass
+
 
     def run_web_app(self):
         st.title("Personalised Marketing")
