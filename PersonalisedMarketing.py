@@ -89,23 +89,51 @@ class PersonalisedMarketing:
 
         # Dummy data for demonstration
         segment_data = {
-            "Number of People": [100, 150, 75],
-            "Percentage of Male": [40, 30, 20],
-            "Percentage of Female": [60, 70, 80],
-            "Revenue Generated": [500000, 750000, 300000],
-            "Products": ["Product A", "Product B", "Product C"],
-            "Amount Spent": [20000, 30000, 12500]
+            "Young Adults": {
+                "Number of People": 100,
+                "Percentage of Male": 40,
+                "Percentage of Female": 60,
+                "Revenue Generated": 500000,
+                "Amount Spent": 20000
+            },
+            "Adults": {
+                "Number of People": 150,
+                "Percentage of Male": 30,
+                "Percentage of Female": 70,
+                "Revenue Generated": 750000,
+                "Amount Spent": 30000
+            },
+            "Elderly": {
+                "Number of People": 75,
+                "Percentage of Male": 45,
+                "Percentage of Female": 55,
+                "Revenue Generated": 300000,
+                "Amount Spent": 12500
+            }
         }
-        df_segment = pd.DataFrame(segment_data)
+        # Select the data for the selected segment
+        data = segment_data[selected_segment]
+        df_segment = pd.DataFrame(data, index=[0])
 
         # Display card with analysis details
-        st.write(f"**Number of People in {selected_segment}:** {df_segment['Number of People'].sum()}")
+        st.write(f"**Number of People in {selected_segment}:** {df_segment['Number of People'][0]}")
         st.write(f"**Percentage of Gender:** {df_segment['Percentage of Male'][0]}% Male, {df_segment['Percentage of Female'][0]}% Female")
-        st.write(f"**Total Revenue Generated:** ₹{df_segment['Revenue Generated'].sum():,.2f}")
+        st.write(f"**Total Revenue Generated:** ₹{df_segment['Revenue Generated'][0]:,.2f}")
+        messages_6 = [
+            {'role': 'system',
+            'content': """You are a smart assistant at Assawa Grocery Stores. Your role is to provide suggestions seeing input to Mr. Assawa on increasing sales, retaining and satisfying customers, and creating targeted marketing campaigns. Input will include customer segments, the number of customers in each segment, gender ratio percentages, and revenue from each segment in a specific period. suggest like in first person you are saying and step-wise, info should be like insight and helpful, step-wise """},
+            {'role': 'user',
+            'content': f"""Segment: {selected_segment}
+                        Number of People: {df_segment['Number of People'][0]},
+                        Gender Ratio (M/F): {df_segment['Percentage of Male'][0]}% Male, {df_segment['Percentage of Female'][0]}% Female,
+                        Total Revenue: ₹{df_segment['Revenue Generated'][0]:,.2f} """},
+        ]
 
+        response2 = final_message(messages_6, temperature=1)
+        st.write(response2)
         # Bar graph for amount spent on products
-        st.subheader("Amount Spent on Products")
-        st.bar_chart(df_segment.set_index('Products'))
+        # st.subheader("Amount Spent on Products")
+        # st.bar_chart(df_segment.set_index('Products'))
 
     def generate_marketing_programs(self):
         st.title("Smart Marketing Campaign")

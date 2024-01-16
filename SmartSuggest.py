@@ -95,8 +95,43 @@ class SmartSuggest:
         response = self.final_message(messages_4, temperature=1)
         # Display header message
         # if increased_sales_items:
-        st.header(f"In the month of {selected_month}, the sales of {', '.join(increased_sales_items[:3])} is higher than the previous month.")
+        messages_5 =  [
+        {'role':'system',
+        'content':"""You need to analyze the input and provide a concise headline of 10-20 words, highlighting key items for restocking."""},
+        {'role':'user',
+        'content':f"""{response}"""},
+        ]
+
+        response1 = self.final_message(messages_5, temperature=1)
+        # Displaying a card
+        # Displaying a card-like layout using markdown with CSS styling
+        # st.markdown(
+        #     f"""
+        #     <div style='padding: 10px; border: 1px solid #d3d3d3; border-radius: 5px;'>
+        #         <h3 style='color: white;'>{response1}</h3>
+        #     </div>
+        #     """,
+        #     unsafe_allow_html=True
+        # )
+        # # st.markdown(f"## {response1}")
+        # with st.expander(f"## {response1}"):
+        #     st.subheader(response)
+        st.divider()
+        st.markdown(
+            f"""
+            <div style='color: #FFFFFF;
+                font-family: 'trebuchet ms';
+                font-weight: bold;
+                font-size: 32px;
+                font-variant: small-caps;'>
+                <h1 style='color: white;'>{response1}</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.divider()
         st.subheader(response)
+
         # elif suggestions:
         #     st.header(f"No items with increased sales in the month of {selected_month}.")
         # else:

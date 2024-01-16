@@ -34,7 +34,7 @@ def main():
 
     st.sidebar.title("Options")
     selected_option = st.sidebar.radio("", ["Analytics", "Modify Inventory", "Smart Suggest", "Restocking Alert",
-                                            "AI Negotiator", "Personalised Marketing", "ChatBot", "FigmaUI"])
+                                            "AI Negotiator", "Personalised Marketing", "Sky Assist", "FigmaUI"])
 
     if selected_option == "Analytics":
         analytics_page = AnalyticsPage()
@@ -54,7 +54,7 @@ def main():
     elif selected_option == "Personalised Marketing":
         personalised_marketing = PersonalisedMarketing()
         personalised_marketing.run_web_app()
-    elif selected_option == "ChatBot":
+    elif selected_option == "Sky Assist":
         chat_bot = ChatBot()
         chat_bot.run_web_app()
     elif selected_option == "FigmaUI":
