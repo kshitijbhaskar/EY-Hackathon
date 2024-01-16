@@ -61,7 +61,7 @@ class ModifyInventory:
     def run_web_app(self):
         st.title("Inventory Management System - Modify Inventory")
         barcode_icon_path = "barcode.png"  # Replace with the actual path to your barcode icon image
-        st.image(barcode_icon_path, width=100)
+        st.image(barcode_icon_path, width=150)
         scan_with_barcode = st.checkbox("Scan with Barcode")
         # Display additional content if the toggle is activated
         if scan_with_barcode:
@@ -80,6 +80,7 @@ class ModifyInventory:
 
         # Display existing items and buttons to remove them
         st.title("Existing Items in Inventory")
+        st.divider()
         conn = sqlite3.connect("inventory.db")
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM items")
@@ -88,6 +89,7 @@ class ModifyInventory:
 
         for item in items:
             self.display_existing_item(item)
+            st.divider()
 
     def display_existing_item(self, item):
         sku_id, item_name, sell_price, buy_price, quantity, added_datetime = item
