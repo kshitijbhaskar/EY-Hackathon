@@ -17,6 +17,60 @@ class AnalyticsPage:
         self.df_sales_single_year['Day_of_Week'] = self.df_sales_single_year['Date'].dt.day_name()
 
     def display_bar_graph_dates(self):
+        # Assuming inventory_dataset is your DataFrame
+        inventory_dataset = pd.read_csv('Inventory.csv')
+        inventory_dataset = inventory_dataset.rename(columns={'Stock in Inventory(In KG for GROCERY)': 'Inventory_Stock'})
+
+        # Sort the DataFrame by 'Inventory_Stock'
+        inventory_dataset = inventory_dataset.sort_values(by='Inventory_Stock')
+
+        # Define color conditions
+        conditions = [
+            (inventory_dataset['Inventory_Stock'] < 100),
+            (inventory_dataset['Inventory_Stock'] >= 100) & (inventory_dataset['Inventory_Stock'] <= 180),
+            (inventory_dataset['Inventory_Stock'] > 180)
+        ]
+        inventory_dataset['Name_of_Product'] = np.where((inventory_dataset['SKU_ID'] == 'PER1001'), 'Deodorant',
+                            np.where((inventory_dataset['SKU_ID'] == 'PER1002'), 'Toothbrush',
+                                     np.where((inventory_dataset['SKU_ID'] == 'PER1003'), 'Lotion',
+                                              np.where((inventory_dataset['SKU_ID'] == 'PER1004'), 'Serum',
+                                                       np.where((inventory_dataset['SKU_ID'] == 'PER1005'), 'Razor',
+                                                                np.where((inventory_dataset['SKU_ID'] == 'PER1006'), 'Hydrator',
+                                                                         np.where((inventory_dataset['SKU_ID'] == 'PER1007'), 'Moisturizer',
+                                                                                  np.where((inventory_dataset['SKU_ID'] == 'GRO1008'), 'Papad',
+                                                                                           np.where((inventory_dataset['SKU_ID'] == 'GRO1009'), 'Ghee',
+                                                                                                    np.where((inventory_dataset['SKU_ID'] == 'GRO1010'), 'Paneer',
+                                                                                                             np.where((inventory_dataset['SKU_ID'] == 'GRO1011'), 'Moong Dal',
+                                                                                                                      np.where((inventory_dataset['SKU_ID'] == 'GRO1012'), 'Basmati Rice',
+                                                                                                                               np.where((inventory_dataset['SKU_ID'] == 'GRO1013'), 'Masale',
+                                                                                                                                        np.where((inventory_dataset['SKU_ID'] == 'GRO1014'), 'Bread',
+                                                                                                                                                 np.where((inventory_dataset['SKU_ID'] == 'HOM1015'), 'Clock',
+                                                                                                                                                          np.where((inventory_dataset['SKU_ID'] == 'HOM1016'), 'Blender',
+                                                                                                                                                                   np.where((inventory_dataset['SKU_ID'] == 'HOM1017'), 'Bath Towel',
+                                                                                                                                                                            np.where((inventory_dataset['SKU_ID'] == 'HOM1018'), 'Pillow',
+                                                                                                                                                                                     np.where((inventory_dataset['SKU_ID'] == 'HOM1019'), 'Utensils',
+                                                                                                                                                                                              np.where((inventory_dataset['SKU_ID'] == 'HOM1020'), 'Bedsheet',
+                                                                                                                                                                                                       'Water Bottle'))))))))))))))))))))
+        # Define corresponding hex color codes
+        colors = [ '#FF0000','#0000FF', '#008000']
+
+        # Use np.select to apply the conditions and assign colors
+        inventory_dataset['bar_color'] = np.select(conditions, colors)
+
+        # Streamlit app
+        st.title('Inventory Stock by Product')
+        fig = px.bar(inventory_dataset, x='Name_of_Product', y='Inventory_Stock', color_discrete_sequence=inventory_dataset['bar_color'], title='Inventory Stock by Product')
+
+        fig.update_traces(marker_color=inventory_dataset['bar_color'])
+
+        # Sort the bars from lowest to highest
+        fig.update_layout(barmode='stack', bargap=0)
+        fig.update_traces(marker_line_color='black', marker_line_width=1.5)  # Add borders to bars
+
+        # Show the plot in Streamlit
+        st.plotly_chart(fig)
+
+    def display_bar_graph_stock(self):
         # Assuming 'Date' and 'CATEGORY' columns are present in the dataset
         df_sales_single_year = pd.read_csv(self.sheet_name)
 
@@ -148,4 +202,5 @@ class AnalyticsPage:
         self.display_pie_chart()
         self.display_bar_graph()
         self.display_bar_graph_dates()
+        self.display_bar_graph_stock()
 

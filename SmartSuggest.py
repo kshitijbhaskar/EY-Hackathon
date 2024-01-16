@@ -1,6 +1,9 @@
 import sqlite3
 import streamlit as st
 import calendar
+from openai import OpenAI
+
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def predict_price(sku_id):
   sku_id = sku_id
@@ -62,6 +65,16 @@ class SmartSuggest:
         conn.close()
 
         return count > 0
+    
+    def final_message(self,input, model="gpt-3.5-turbo", temperature=0):
+
+        output = client.chat.completions.create(
+            model=model,
+            messages=input,
+            temperature=temperature,
+
+        )
+        return output.choices[0].message.content
 
     def run_web_app(self):
         st.title("Smart Suggest Web App")
@@ -72,15 +85,22 @@ class SmartSuggest:
 
         # Process items added in the selected month
         suggestions, increased_sales_items = self.get_top_suggestions_for_month(month_number)
+        messages_4 =  [
+        {'role':'system',
+        'content':"""As the intelligent assistant for Assawa grocery stores, you deliver comprehensive pop-up alerts (80-100 words) guiding the restocking of key items to maximize profits. In your suggestions, you consider the current month, analyzing the demand for grocery items based on local trends, festivals in the Indian month, prevailing weather conditions, and other factors such as holidays. Your insights aim to optimize the store's inventory and cater to the specific needs of customers during various occasions and seasons."""},
+        {'role':'user',
+        'content':f"""Give alert message for the month {selected_month}, use emojies and format the mesaage beautifully using bullet points, bold letters , italics"""},
+        ]
 
+        response = self.final_message(messages_4, temperature=1)
         # Display header message
-        if increased_sales_items:
-            st.header(f"In the month of {selected_month}, the sales of {', '.join(increased_sales_items[:3])} is higher than the previous month.")
-            st.subheader("Your suitable recommendations are mentioned below:")
-        elif suggestions:
-            st.header(f"No items with increased sales in the month of {selected_month}.")
-        else:
-            st.header("No recommendations this month.")
+        # if increased_sales_items:
+        st.header(f"In the month of {selected_month}, the sales of {', '.join(increased_sales_items[:3])} is higher than the previous month.")
+        st.subheader(response)
+        # elif suggestions:
+        #     st.header(f"No items with increased sales in the month of {selected_month}.")
+        # else:
+        #     st.header("No recommendations this month.")
 
         # Display suggestions in three card-like containers
         for suggestion in suggestions:
