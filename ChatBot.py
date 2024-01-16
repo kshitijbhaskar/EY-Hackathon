@@ -11,7 +11,7 @@ class ChatBot:
     def generate_joke(self):
         # Use OpenAI to generate a joke
         joke_prompt = [
-        {"role": "user", "content": "Generate a grocery-related joke."}
+        {"role": "user", "content": "Generate a new joke related to shopkeepers."}
         ]
         joke_response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -25,7 +25,7 @@ class ChatBot:
         # Fetch the current month
         current_month = datetime.datetime.now().strftime("%B")
         occasion_prompt = [
-        {"role": "user", "content": f"Upcoming Indian festivals and occasions in {current_month}."}
+        {"role": "user", "content": f"Upcoming Indian festivals and occasions in {current_month} as a numbered list, don't write anything other than the list items"}
         ]
         # Use OpenAI to generate information about upcoming occasions
         occasion_response = client.chat.completions.create(
@@ -60,9 +60,8 @@ class ChatBot:
             joke = self.generate_joke()
             occasions_info = self.generate_upcoming_occasions()
             #pre_instructions = "Feel free to ask about grocery-related information, upcoming occasions, or request a joke! You can guide the conversation."
-
-            welcome_message = f"🛒 Welcome Mr. Assawa! Here's a fun fact for you: {joke}\n" + f"\nAlso, in {occasions_info}\n" + "\nHow can I assist you today?\n"
-
+            # Add the conversation context and instructions to the OpenAI prompt
+            welcome_message = f"🛒 Welcome Mr. Assawa! Here's a fun fact for you: {joke}\n" + "\nUpcoming Indian festivals and occasions\n" + f"{occasions_info}\n" + "\nHow can I assist you today?\n"
             st.chat_message("skAI").markdown(
                 self.customize_response(welcome_message)
             )
@@ -71,22 +70,7 @@ class ChatBot:
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
-            # Add clickable prompt suggestions
-            st.write("Choose a suggestion:")
-            suggestion_options = ["Tell me a joke", "Upcoming occasions", "Recommend groceries"]
-            selected_suggestion = st.selectbox("", suggestion_options)
-
-            # Process the user's selection
-            if selected_suggestion == "Tell me a joke":
-                full_response = self.generate_joke()
-            elif selected_suggestion == "Upcoming occasions":
-                full_response = self.generate_upcoming_occasions()
-            elif selected_suggestion == "Recommend ":
-                # Add logic for grocery recommendations
-                full_response = "Here are some recommended groceries: ..."
-            else:
-                full_response = "How can I assist you today?"
-            # Add the conversation context and instructions to the OpenAI prompt
+            
             pre_instructions = "Feel free to ask about grocery-related information, upcoming occasions, or request a joke! You can guide the conversation."
             openai_prompt = f"{pre_instructions}\n" + "\n".join([m["content"] for m in st.session_state.messages])
             openai_response = client.chat.completions.create(

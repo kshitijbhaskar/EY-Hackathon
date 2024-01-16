@@ -31,10 +31,10 @@ def create_database():
 def main():
     create_database()  # Make sure the database is created before using it
     st.set_page_config(page_title="Sky: Inventory Management System", page_icon=":bar_chart:")
-
-    st.sidebar.title("Options")
+    st.sidebar.markdown("<h1 style='text-align: left; font-size: 48px; font-weight: bold;'>Sky</h1>", unsafe_allow_html=True)
+    st.sidebar.title("For small businesses, Sky is the limit!")
     selected_option = st.sidebar.radio("", ["Analytics", "Modify Inventory", "Smart Suggest", "Restocking Alert",
-                                            "AI Negotiator", "Personalised Marketing", "Sky Assist", "FigmaUI"])
+                                            "AI Negotiator", "Personalised Marketing", "Sky Assist"])
 
     if selected_option == "Analytics":
         analytics_page = AnalyticsPage()
@@ -57,9 +57,6 @@ def main():
     elif selected_option == "Sky Assist":
         chat_bot = ChatBot()
         chat_bot.run_web_app()
-    elif selected_option == "FigmaUI":
-        figma_ui = FigmaUI()
-        figma_ui.run_web_app()
 
 if __name__ == "__main__":
     main()

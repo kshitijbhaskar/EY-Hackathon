@@ -1,6 +1,19 @@
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
+from openai import OpenAI
+
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+def final_message(input, model="gpt-3.5-turbo", temperature=0):
+
+    output = client.chat.completions.create(
+        model=model,
+        messages=input,
+        temperature=temperature,
+
+    )
+    return output.choices[0].message.content
 
 # Assumed fixed wholesaler details
 WHOLESALE_DATA = pd.DataFrame([
@@ -41,7 +54,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler E",
         "latitude": 28.723,
         "longitude": 77.213,
         "reply_message": "",
@@ -50,7 +63,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler F",
         "latitude": 28.527,
         "longitude": 77.212,
         "reply_message": "",
@@ -59,7 +72,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler G",
         "latitude": 28.7556,
         "longitude": 77.2235,
         "reply_message": "",
@@ -68,7 +81,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler H",
         "latitude": 28.72,
         "longitude": 77.21431,
         "reply_message": "",
@@ -77,7 +90,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler I",
         "latitude": 28.732,
         "longitude": 77.2,
         "reply_message": "",
@@ -86,7 +99,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler J",
         "latitude": 28.7,
         "longitude": 77.2213,
         "reply_message": "",
@@ -95,7 +108,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler K",
         "latitude": 28.755,
         "longitude": 77.2,
         "reply_message": "",
@@ -104,7 +117,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler L",
         "latitude": 28.7232,
         "longitude": 77.2,
         "reply_message": "",
@@ -113,7 +126,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler M",
         "latitude": 28.7,
         "longitude": 77.21,
         "reply_message": "",
@@ -122,7 +135,7 @@ WHOLESALE_DATA = pd.DataFrame([
         "delivery_date": ""
     },
     {
-        "wholesaler_name": "Wholesaler D",
+        "wholesaler_name": "Wholesaler N",
         "latitude": 28.87,
         "longitude": 77.12,
         "reply_message": "",
@@ -134,7 +147,7 @@ WHOLESALE_DATA = pd.DataFrame([
 
 class AINegotiator:
     def __init__(self):
-        self.user = "*User*"
+        self.user = "Devansh Assawa"
 
         # if 'responses1' not in st.session_state:
         #     st.session_state['responses1'] = []
@@ -186,7 +199,14 @@ class AINegotiator:
 
         if st.button("Generate Template"):
             template = self.generate_message_template(st.session_state['quantities'])
-            st.text_area("Message Template", template, height=200)
+            messages_6 =  [
+            {'role':'system',
+            'content':"""You are an AI negotiator representing Mr. Assawa, a grocery store owner. Your task is to compose a message for wholesalers, inquiring about the prices of specified items and their quantities. You will receive input containing details and a list of items that we need to purchase."""},
+            {'role':'user',
+            'content':f""" {template}."""},
+            ]
+            response2 = final_message(messages_6, temperature=1)
+            st.text_area("Message Template", response2, height=200)
 
         if st.button("Send Message"):
             # item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
@@ -208,21 +228,40 @@ class AINegotiator:
         map_data = {'LAT': WHOLESALE_DATA['latitude'].tolist(), 'LON': WHOLESALE_DATA['longitude'].tolist()}
         st.map(map_data)
 
-        wholesaler_data = pd.read_excel('wholesaler_deal.xlsx', sheet_name='Updated')
+        wholesaler_data = pd.read_excel('wholesaler_deal.xlsx', sheet_name='Initial')
 
-        # Display wholesaler details cards
-        for index, wholesaler in wholesaler_data.iterrows():
+        num_rows_to_display = 4
+        display_data = wholesaler_data.head(num_rows_to_display)
+
+        # Display the initial rows
+        for index, wholesaler in display_data.iterrows():
             with st.expander(f"Wholesaler: {wholesaler['wholesaler_name']}", expanded=True):
-                st.write(f"Latitude: {wholesaler['latitude']}")
-                st.write(f"Longitude: {wholesaler['longitude']}")
                 st.write(f"Reply Message: {wholesaler['reply_message']}")
-                st.write(f"Item1 Offer: {wholesaler['item1 offer']}")
-                st.write(f"Item2 Offer: {wholesaler['item2 offer']}")
-                st.write(f"Item3 Offer: {wholesaler['item3 offer']}")
-                st.write(f"Item4 Offer: {wholesaler['item4 offer']}")
-                st.write(f"Item5 Offer: {wholesaler['item5 offer']}")
-                st.write(f"Shipping Charges: {wholesaler['shipping_charges']}")
-                st.write(f"Delivery Date: {wholesaler['delivery_date']}")
+                st.write(f"Rice: ₹{wholesaler['item1_offer']}")
+                st.write(f"Wheat: ₹{wholesaler['item2_offer']}")
+                st.write(f"Refined Oil: ₹{wholesaler['item3_offer']}")
+                st.write(f"Sugar: ₹{wholesaler['item4_offer']}")
+                st.write(f"Daal: ₹{wholesaler['item5_offer']}")
+                st.write(f"Shipping Charges: ₹{wholesaler['shipping_charges']}")
+                st.write(f"Total Charges: ₹{wholesaler['total_cost']}")
+                st.write(f"Delivery Time: {wholesaler['delivery_date']}")
+
+        # Add a button to load more rows
+        if st.button("Load More"):
+            # Display the remaining rows
+            remaining_data = wholesaler_data.iloc[num_rows_to_display:]
+            for index, wholesaler in remaining_data.iterrows():
+                with st.expander(f"Wholesaler: {wholesaler['wholesaler_name']}", expanded=True):
+                    st.write(f"Reply Message: {wholesaler['reply_message']}")
+                    st.write(f"Rice: ₹{wholesaler['item1_offer']}")
+                    st.write(f"Wheat: ₹{wholesaler['item2_offer']}")
+                    st.write(f"Refined Oil: ₹{wholesaler['item3_offer']}")
+                    st.write(f"Sugar: ₹{wholesaler['item4_offer']}")
+                    st.write(f"Daal: ₹{wholesaler['item5_offer']}")
+                    st.write(f"Shipping Charges: ₹{wholesaler['shipping_charges']}")
+                    st.write(f"Total Charges: ₹{wholesaler['total_cost']}")
+                    st.write(f"Delivery Time: {wholesaler['delivery_date']}")
+
 
         st.subheader("Negotiation Details Table")
         st.write(st.session_state['df1'])
@@ -250,19 +289,44 @@ class AINegotiator:
         st.map(map_data)
         wholesaler_data = pd.read_excel('wholesaler_deal.xlsx', sheet_name='Updated')
 
-        # Display wholesaler details cards
-        for index, wholesaler in wholesaler_data.iterrows():
+        num_rows_to_display = 4
+        display_data = wholesaler_data.head(num_rows_to_display)
+
+        # Display the initial rows
+        for index, wholesaler in display_data.iterrows():
             with st.expander(f"Wholesaler: {wholesaler['wholesaler_name']}", expanded=True):
-                st.write(f"Latitude: {wholesaler['latitude']}")
-                st.write(f"Longitude: {wholesaler['longitude']}")
                 st.write(f"Reply Message: {wholesaler['reply_message']}")
-                st.write(f"Item1 Offer: {wholesaler['item1 offer']}")
-                st.write(f"Item2 Offer: {wholesaler['item2 offer']}")
-                st.write(f"Item3 Offer: {wholesaler['item3 offer']}")
-                st.write(f"Item4 Offer: {wholesaler['item4 offer']}")
-                st.write(f"Item5 Offer: {wholesaler['item5 offer']}")
-                st.write(f"Shipping Charges: {wholesaler['shipping_charges']}")
-                st.write(f"Delivery Date: {wholesaler['delivery_date']}")
+                st.write(f"Rice (initial offer): ₹{wholesaler['item1_offer']}")
+                st.write(f"Rice (finaloffer): ₹{wholesaler['item1_final']}")
+                st.write(f"Wheat (initial offer): ₹{wholesaler['item2_offer']}")
+                st.write(f"Wheat (finaloffer): ₹{wholesaler['item2_final']}")
+                st.write(f"Refined Oil (initial offer): ₹{wholesaler['item3_offer']}")
+                st.write(f"Refined Oil (finaloffer): ₹{wholesaler['item3_final']}")
+                st.write(f"Sugar (initial offer): ₹{wholesaler['item4_offer']}")
+                st.write(f"Sugar (finaloffer): ₹{wholesaler['item4_final']}")
+                st.write(f"Daal (initial offer): ₹{wholesaler['item5_offer']}")
+                st.write(f"Daal (finaloffer): ₹{wholesaler['item5_final']}")
+                st.write(f"Shipping Charges: ₹{wholesaler['shipping_charges']}")
+                st.write(f"Total Charges: ₹{wholesaler['total_cost']}")
+                st.write(f"Total Savings: ₹{wholesaler['cost_saved']}")
+                st.write(f"Delivery Time: {wholesaler['delivery_date']}")
+
+        # Add a button to load more rows
+        if st.button("Load More"):
+            # Display the remaining rows
+            remaining_data = wholesaler_data.iloc[num_rows_to_display:]
+            for index, wholesaler in remaining_data.iterrows():
+                with st.expander(f"Wholesaler: {wholesaler['wholesaler_name']}", expanded=True):
+                    st.write(f"Latitude: {wholesaler['latitude']}")
+                    st.write(f"Longitude: {wholesaler['longitude']}")
+                    st.write(f"Reply Message: {wholesaler['reply_message']}")
+                    st.write(f"Item1 Offer: {wholesaler['item1_offer']}")
+                    st.write(f"Item2 Offer: {wholesaler['item2_offer']}")
+                    st.write(f"Item3 Offer: {wholesaler['item3_offer']}")
+                    st.write(f"Item4 Offer: {wholesaler['item4_offer']}")
+                    st.write(f"Item5 Offer: {wholesaler['item5_offer']}")
+                    st.write(f"Shipping Charges: {wholesaler['shipping_charges']}")
+                    st.write(f"Delivery Date: {wholesaler['delivery_date']}")
         st.subheader("Best Deal Table")
         st.write(st.session_state['df2'])
 

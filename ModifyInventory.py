@@ -60,7 +60,14 @@ class ModifyInventory:
 
     def run_web_app(self):
         st.title("Inventory Management System - Modify Inventory")
-
+        barcode_icon_path = "barcode.png"  # Replace with the actual path to your barcode icon image
+        st.image(barcode_icon_path, width=100)
+        scan_with_barcode = st.checkbox("Scan with Barcode")
+        # Display additional content if the toggle is activated
+        if scan_with_barcode:
+            st.write("Barcode scanning is enabled. Ready to scan...")
+        else:
+            st.write("Barcode scanning is disabled.")
         # User input for item details
         sku_id = st.text_input("Enter SKU ID:")
         item_name = st.text_input("Enter Item Name:")
