@@ -78,6 +78,8 @@ class SmartSuggest:
 
     def run_web_app(self):
         st.title("Smart Suggest Web App")
+        selected_language = st.selectbox("Select Language", ["English", "Hindi", "Bengali"])
+
 
         # User input for the month
         selected_month = st.selectbox("Select Month:", list(calendar.month_name)[1:], index=0)
@@ -89,7 +91,7 @@ class SmartSuggest:
         {'role':'system',
         'content':"""As the intelligent assistant for Assawa grocery stores, you deliver comprehensive pop-up alerts (80-100 words) guiding the restocking of key items to maximize profits. In your suggestions, you consider the current month, analyzing the demand for grocery items based on local trends, festivals in the Indian month, prevailing weather conditions, and other factors such as holidays. Your insights aim to optimize the store's inventory and cater to the specific needs of customers during various occasions and seasons."""},
         {'role':'user',
-        'content':f"""Give alert message for the month {selected_month}, use emojies and format the mesaage beautifully using bullet points, bold letters , italics"""},
+        'content':f"""Please respond in {selected_language} language, Give alert message for the month {selected_month}, use emojies and format the mesaage beautifully using bullet points, bold letters , italics"""},
         ]
 
         response = self.final_message(messages_4, temperature=1)
@@ -97,7 +99,7 @@ class SmartSuggest:
         # if increased_sales_items:
         messages_5 =  [
         {'role':'system',
-        'content':"""You need to analyze the input and provide a concise headline of 10-20 words, highlighting key items for restocking."""},
+        'content':f"""Please respond in {selected_language} language,You need to analyze the input and provide a concise headline of 10-20 words, highlighting key items for restocking."""},
         {'role':'user',
         'content':f"""{response}"""},
         ]
@@ -131,6 +133,8 @@ class SmartSuggest:
         )
         st.divider()
         st.subheader(response)
+        st.write("Items added in this month:")
+
 
         # elif suggestions:
         #     st.header(f"No items with increased sales in the month of {selected_month}.")
@@ -178,8 +182,10 @@ class SmartSuggest:
         return suggestions[:3], list(increased_sales_items)
 
     def display_suggestion_card(self, suggestion):
+        
+        # st.divider()
         st.write(f"**Item Name:** {suggestion['item_name']}")
-        st.write(f"**Price Increase:** {suggestion['price_increase']:.2%}")
+        # st.write(f"**Price Increase:** {suggestion['price_increase']:.2%}")
 
         # Fetch details of the item using InventoryManager
         inventory_manager = InventoryManager()
