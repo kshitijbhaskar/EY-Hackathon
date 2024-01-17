@@ -25,7 +25,7 @@ class ChatBot:
         # Fetch the current month
         current_month = datetime.datetime.now().strftime("%B")
         occasion_prompt = [
-        {"role": "user", "content": f"Upcoming Indian festivals and occasions in {current_month} as a numbered list, don't write anything other than the list items"}
+        {"role": "user", "content": f"Upcoming Indian festivals and occasions in {current_month} as a numbered list, don't write anything other than the list"}
         ]
         # Use OpenAI to generate information about upcoming occasions
         occasion_response = client.chat.completions.create(
@@ -71,21 +71,30 @@ class ChatBot:
             with st.chat_message("user"):
                 st.markdown(prompt)
             
-            pre_instructions = "Feel free to ask about grocery-related information, upcoming occasions, or request a joke! You can guide the conversation."
-            openai_prompt = f"{pre_instructions}\n" + "\n".join([m["content"] for m in st.session_state.messages])
-            openai_response = client.chat.completions.create(
-                model=st.session_state["openai_model"],
-                prompt=openai_prompt,
-                temperature=0.5,
-                max_tokens=150
-            )
+            # pre_instructions = "Feel free to ask about grocery-related information, upcoming occasions, or request a joke! You can guide the conversation."
+            # openai_prompt = f"{pre_instructions}\n" + "\n".join([m["content"] for m in st.session_state.messages])
+            # openai_response = client.chat.completions.create(
+            #     model=st.session_state["openai_model"],
+            #     prompt=openai_prompt,
+            #     temperature=0.5,
+            #     max_tokens=150
+            # )
 
             # Assistant role and message
-            with st.chat_message("skAI"):
+            with st.chat_message("assistant"):
                 message_placeholder = st.empty()
-                full_response = openai_response.choices[0].message.content
-                message_placeholder.markdown(full_response + "▌")
-
+                full_response = ""
+                for response in client.chat.completions.create(
+                    model=st.session_state["openai_model"],
+                    messages=[
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.messages
+                    ],
+                    stream=True,
+                ):
+                    full_response += (response.choices[0].delta.content or "")
+                    message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
             # Customize the assistant's response and save it with its role
             custom_response = self.customize_response(full_response)
             st.session_state.messages.append({"role": "assistant", "content": custom_response})

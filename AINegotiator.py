@@ -160,7 +160,7 @@ class AINegotiator:
         if 'df1' not in st.session_state:
             st.session_state['df1'] = pd.read_excel('item_deals.xlsx', sheet_name='Initial')
         if 'df2' not in st.session_state:
-            st.session_state['df2'] = pd.read_excel('item_deals.xlsx', sheet_name='Initial')
+            st.session_state['df2'] = pd.read_excel('item_deals.xlsx', sheet_name='Updated')
 
     def run_web_app(self):
         st.title("AI Negotiator")
