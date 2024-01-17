@@ -11,7 +11,14 @@ from FigmaUI import FigmaUI
 import sqlite3
 import subprocess
 
-subprocess.run(["pip", "install", "pywhatkit"])
+# Install required packages
+subprocess.run(["pip", "install", "pywhatkit", "pyvirtualdisplay"])
+
+from pyvirtualdisplay import Display
+
+# Start virtual display
+display = Display(visible=0, size=(800, 600))
+display.start()
 
 def create_database():
     conn = sqlite3.connect("inventory.db")
@@ -72,3 +79,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    display.stop()
