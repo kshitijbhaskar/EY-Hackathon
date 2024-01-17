@@ -9,6 +9,9 @@ from RestockingAlert import RestockingAlert
 from ChatBot import ChatBot
 from FigmaUI import FigmaUI
 import sqlite3
+import subprocess
+
+subprocess.run(["pip", "install", "pywhatkit"])
 
 def create_database():
     conn = sqlite3.connect("inventory.db")
