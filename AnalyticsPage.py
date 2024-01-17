@@ -195,8 +195,8 @@ class AnalyticsPage:
         centre_circle = plt.Circle((0, 0), 0.6, fc='white')  # Set the background color to black
         fig = plt.gcf()
         fig.gca().add_artist(centre_circle)
-        ax.annotate('Total Revenue \n ₹' + str(total_revenue), xy=(0, 0), fontsize=75, ha="center",
-                    bbox=dict(boxstyle='round', color='#2195c5', edgecolor='none'))  # Set the background color to black
+        ax.annotate('Total Revenue \n ₹' + str(total_revenue), xy=(0, 0), fontsize=70, ha="center",
+                    bbox=dict(boxstyle='round', edgecolor='none'))  # Set the background color to black
 
         # fig.patch.set_alpha(0.0)  # Set the background color of the entire figure to black
 
