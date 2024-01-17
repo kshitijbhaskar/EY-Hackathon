@@ -38,15 +38,6 @@ messages_3 =  [
  'content':f"""Compose a message for {a}, a {b} in the {c} category who hasn't visited our stores for a while. he currently has {e} rupees in loyalty points. The language of the message should be {f}."""},
 ]
 
-def final_message(input, model="gpt-3.5-turbo", temperature=0):
-
-    output = client.chat.completions.create(
-        model=model,
-        messages=input,
-        temperature=temperature,
-
-    )
-    return output.choices[0].message.content
 
 # Function to get the current date
 def get_current_date():
@@ -62,17 +53,20 @@ def calculate_days_since_last_visit(last_visit_date):
 class PersonalisedMarketing:
     def __init__(self):
         pass
+
+    def final_message(self,input, model="gpt-3.5-turbo", temperature=0):
+
+        output = client.chat.completions.create(
+            model=model,
+            messages=input,
+            temperature=temperature,
+
+        )
+        return output.choices[0].message.content
     # Function to display data table from Excel file
     def display_data_table(self, file_path, sheet_name, key):
         df = pd.read_excel(file_path, sheet_name)
         st.table(df)
-
-        if st.button("Send message to customers", key=key ,type="primary"):
-            response = final_message(messages_1, temperature=1)
-            subprocess.run(["python", "whatsapp_sender.py", '+919302389149', response, '6', '0'])
-            st.success("Messages Sent!")
-            if st.button("Back"):
-                pass
 
     def display_customer_segments(self):
         st.header("Customer Segments")
@@ -129,7 +123,7 @@ class PersonalisedMarketing:
                         Total Revenue: ₹{df_segment['Revenue Generated'][0]:,.2f} """},
         ]
 
-        response2 = final_message(messages_6, temperature=1)
+        response2 = self.final_message(messages_6, temperature=1)
         st.write(response2)
         # Bar graph for amount spent on products
         # st.subheader("Amount Spent on Products")
@@ -138,14 +132,44 @@ class PersonalisedMarketing:
     def generate_marketing_programs(self):
         st.title("Smart Marketing Campaign")
         # Buttons for each marketing program
-        if st.button("Occasions specific program suggestions"):
-            self.display_occasions_suggestions()
+        selected_option = st.sidebar.radio("Choose campaign strategy", ["Occasions", "Deadstock", "Retention"])
 
-        if st.button("Deadstock specific program suggestions"):
-            self.display_deadstock_suggestions()
+        if selected_option == "Occasions":
+            st.radio("Choose the target occasion for campaign", ["Dussehra: 2024-10-10", "Diwali: 2024-11-04", "Christmas: 2024-12-25"])
+            with st.expander("Customer Details"):
+                df = pd.read_excel('Profiles.xlsx', 'Sheet1')
+                st.table(df)
+        elif selected_option == "Deadstock":
+            stock_data = pd.read_excel('stock.xlsx')
+            deadstock_suggestions = dict(zip(stock_data['Item'], stock_data['Stock']))
+            options=[]
+            for i, (item, stock) in enumerate(deadstock_suggestions.items()):
+                options.append(f"{item} - Stock: {stock}")
 
-        if st.button("Retention specific program suggestions"):
-            self.display_retention_suggestions()
+            st.multiselect("Choose items", options)
+            with st.expander("Customer Details"):
+                df = pd.read_excel('Profiles.xlsx', 'Sheet1')
+                st.table(df)
+        elif selected_option == "Retention":
+            with st.expander("Last Visited Customers"):
+                df = pd.read_excel('Profiles.xlsx', 'Sheet2')
+                if "Last Purchase Date" in df.columns:
+                    df["Last Purchase Date"] = pd.to_datetime(df["Last Purchase Date"]).dt.date.astype(str)
+                st.table(df)
+
+        # if st.radio("Occasions specific program suggestions"):
+        #     self.display_occasions_suggestions()
+
+        # if st.button("Deadstock specific program suggestions"):
+        #     self.display_deadstock_suggestions()
+
+        # if st.button("Retention specific program suggestions"):
+        #     self.display_retention_suggestions()
+
+        # self.display_data_table('Profiles.xlsx','Sheet1',f" ")
+        if st.button("Send message to customers" ,type="primary"):
+            response = self.final_message(messages_1, temperature=1)
+            subprocess.run(["python", "whatsapp_sender.py", '+919302389149', response, '6', '0'])
 
     def display_occasions_suggestions(self):
         st.subheader("Occasions Suggestions:")
@@ -157,8 +181,7 @@ class PersonalisedMarketing:
         }
         for occasion, date_str in occasions_suggestions.items():
             date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            with st.expander(f"{occasion} - {date.strftime('%Y-%m-%d')}"):
-                self.display_data_table('Profiles.xlsx','Sheet1',f"{occasion} - date: {date}")
+            st.radio(f"{occasion} - {date.strftime('%Y-%m-%d')}")
 
     def display_deadstock_suggestions(self):
         stock_data = pd.read_excel('stock.xlsx')
@@ -177,7 +200,7 @@ class PersonalisedMarketing:
                     df["Last Purchase Date"] = pd.to_datetime(df["Last Purchase Date"]).dt.date.astype(str)
                 st.table(df)
                 if st.button("Send message to customers",type="primary"):
-                    response = final_message(messages_1, temperature=1)
+                    response = self.final_message(messages_1, temperature=1)
                     subprocess.run(["python", "whatsapp_sender.py", '+919302389149', response, '6', '0'])
                     st.success("Messages Sent!")
                     if st.button("Back"):
@@ -187,9 +210,7 @@ class PersonalisedMarketing:
     def run_web_app(self):
         st.title("Personalised Marketing")
 
-        # Sidebar options
-        st.sidebar.title("Options")
-        selected_option = st.sidebar.radio("", ["Customer Segments", "Smart Marketing Programs"])
+        selected_option = st.sidebar.radio("Select Tab:", ["Customer Segments", "Smart Marketing Programs"])
 
         # Initialize and run the selected option
         if selected_option == "Customer Segments":

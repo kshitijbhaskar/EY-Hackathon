@@ -33,7 +33,7 @@ def main():
     st.set_page_config(page_title="Sky: Inventory Management System", page_icon=":bar_chart:")
     st.sidebar.markdown("<h1 style='text-align: left; font-size: 48px; font-weight: bold;'>Sky</h1>", unsafe_allow_html=True)
     st.sidebar.title("For small businesses, Sky is the limit!")
-    selected_option = st.sidebar.radio("", ["Analytics", "Modify Inventory", "Smart Suggest", "Restocking Alert",
+    selected_option = st.sidebar.radio("Select Tab:", ["Analytics", "Modify Inventory", "Smart Suggest", "Restocking Alert",
                                             "AI Negotiator", "Personalised Marketing", "Sky Assist"])
 
     if selected_option == "Analytics":
