@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.colors as mcolors
 import plotly.express as px
-import seaborn as sns
+
+st.spinner('Loading...')
 
 class AnalyticsPage:
     def __init__(self):
@@ -30,27 +31,32 @@ class AnalyticsPage:
             (inventory_dataset['Inventory_Stock'] >= 100) & (inventory_dataset['Inventory_Stock'] <= 180),
             (inventory_dataset['Inventory_Stock'] > 180)
         ]
-        inventory_dataset['Name_of_Product'] = np.where((inventory_dataset['SKU_ID'] == 'PER1001'), 'Deodorant',
-                            np.where((inventory_dataset['SKU_ID'] == 'PER1002'), 'Toothbrush',
-                                     np.where((inventory_dataset['SKU_ID'] == 'PER1003'), 'Lotion',
-                                              np.where((inventory_dataset['SKU_ID'] == 'PER1004'), 'Serum',
-                                                       np.where((inventory_dataset['SKU_ID'] == 'PER1005'), 'Razor',
-                                                                np.where((inventory_dataset['SKU_ID'] == 'PER1006'), 'Hydrator',
-                                                                         np.where((inventory_dataset['SKU_ID'] == 'PER1007'), 'Moisturizer',
-                                                                                  np.where((inventory_dataset['SKU_ID'] == 'GRO1008'), 'Papad',
-                                                                                           np.where((inventory_dataset['SKU_ID'] == 'GRO1009'), 'Ghee',
-                                                                                                    np.where((inventory_dataset['SKU_ID'] == 'GRO1010'), 'Paneer',
-                                                                                                             np.where((inventory_dataset['SKU_ID'] == 'GRO1011'), 'Moong Dal',
-                                                                                                                      np.where((inventory_dataset['SKU_ID'] == 'GRO1012'), 'Basmati Rice',
-                                                                                                                               np.where((inventory_dataset['SKU_ID'] == 'GRO1013'), 'Masale',
-                                                                                                                                        np.where((inventory_dataset['SKU_ID'] == 'GRO1014'), 'Bread',
-                                                                                                                                                 np.where((inventory_dataset['SKU_ID'] == 'HOM1015'), 'Clock',
-                                                                                                                                                          np.where((inventory_dataset['SKU_ID'] == 'HOM1016'), 'Blender',
-                                                                                                                                                                   np.where((inventory_dataset['SKU_ID'] == 'HOM1017'), 'Bath Towel',
-                                                                                                                                                                            np.where((inventory_dataset['SKU_ID'] == 'HOM1018'), 'Pillow',
-                                                                                                                                                                                     np.where((inventory_dataset['SKU_ID'] == 'HOM1019'), 'Utensils',
-                                                                                                                                                                                              np.where((inventory_dataset['SKU_ID'] == 'HOM1020'), 'Bedsheet',
-                                                                                                                                                                                                       'Water Bottle'))))))))))))))))))))
+        # Define a dictionary to map SKU_ID to Product Name
+        sku_id_to_product = {
+            'PER1001': 'Deodorant',
+            'PER1002': 'Toothbrush',
+            'PER1003': 'Lotion',
+            'PER1004': 'Serum',
+            'PER1005': 'Razor',
+            'PER1006': 'Hydrator',
+            'PER1007': 'Moisturizer',
+            'GRO1008': 'Papad',
+            'GRO1009': 'Ghee',
+            'GRO1010': 'Paneer',
+            'GRO1011': 'Moong Dal',
+            'GRO1012': 'Basmati Rice',
+            'GRO1013': 'Masale',
+            'GRO1014': 'Bread',
+            'HOM1015': 'Clock',
+            'HOM1016': 'Blender',
+            'HOM1017': 'Bath Towel',
+            'HOM1018': 'Pillow',
+            'HOM1019': 'Utensils',
+            'HOM1020': 'Bedsheet',
+        }
+
+        # Use the map function to create the 'Name_of_Product' column
+        inventory_dataset['Name_of_Product'] = inventory_dataset['SKU_ID'].map(sku_id_to_product).fillna('Water Bottle')
         # Define corresponding hex color codes
         colors = [ '#FF0000','#0000FF', '#008000']
 
@@ -131,27 +137,32 @@ class AnalyticsPage:
         dataset = pd.read_csv('SKU & TimeSeries.csv')
         inventory_dataset = pd.read_csv('Inventory.csv')
         df = pd.DataFrame(dataset)
-        dataset['Name_of_Product'] = np.where((df['SKU_ID'] == 'PER1001'), 'Deodorant',
-                                            np.where((df['SKU_ID'] == 'PER1002'), 'Toothbrush',
-                                                        np.where((df['SKU_ID'] == 'PER1003'), 'Lotion',
-                                                                np.where((df['SKU_ID'] == 'PER1004'), 'Serum',
-                                                                        np.where((df['SKU_ID'] == 'PER1005'), 'Razor',
-                                                                                np.where((df['SKU_ID'] == 'PER1006'), 'Hydrator',
-                                                                                            np.where((df['SKU_ID'] == 'PER1007'), 'Moisturizer',
-                                                                                                    np.where((df['SKU_ID'] == 'GRO1008'), 'Papad',
-                                                                                                            np.where((df['SKU_ID'] == 'GRO1009'), 'Ghee',
-                                                                                                                    np.where((df['SKU_ID'] == 'GRO1010'), 'Paneer',
-                                                                                                                                np.where((df['SKU_ID'] == 'GRO1011'), 'Moong Dal',
-                                                                                                                                        np.where((df['SKU_ID'] == 'GRO1012'), 'Basmati Rice',
-                                                                                                                                                np.where((df['SKU_ID'] == 'GRO1013'), 'Masale',
-                                                                                                                                                        np.where((df['SKU_ID'] == 'GRO1014'), 'Bread',
-                                                                                                                                                                    np.where((df['SKU_ID'] == 'HOM1015'), 'Clock',
-                                                                                                                                                                            np.where((df['SKU_ID'] == 'HOM1016'), 'Blender',
-                                                                                                                                                                                    np.where((df['SKU_ID'] == 'HOM1017'), 'Bath Towel',
-                                                                                                                                                                                            np.where((df['SKU_ID'] == 'HOM1018'), 'Pillow',
-                                                                                                                                                                                                        np.where((df['SKU_ID'] == 'HOM1019'), 'Utensils',
-                                                                                                                                                                                                                np.where((df['SKU_ID'] == 'HOM1020'), 'Bedsheet',
-                                                                                                                                                                                                                        'Water Bottle'))))))))))))))))))))
+        # Define a dictionary to map SKU_ID to Product Name
+        sku_id_to_product = {
+            'PER1001': 'Deodorant',
+            'PER1002': 'Toothbrush',
+            'PER1003': 'Lotion',
+            'PER1004': 'Serum',
+            'PER1005': 'Razor',
+            'PER1006': 'Hydrator',
+            'PER1007': 'Moisturizer',
+            'GRO1008': 'Papad',
+            'GRO1009': 'Ghee',
+            'GRO1010': 'Paneer',
+            'GRO1011': 'Moong Dal',
+            'GRO1012': 'Basmati Rice',
+            'GRO1013': 'Masale',
+            'GRO1014': 'Bread',
+            'HOM1015': 'Clock',
+            'HOM1016': 'Blender',
+            'HOM1017': 'Bath Towel',
+            'HOM1018': 'Pillow',
+            'HOM1019': 'Utensils',
+            'HOM1020': 'Bedsheet',
+        }
+
+        # Use the map function to create the 'Name_of_Product' column
+        dataset['Name_of_Product'] = df['SKU_ID'].map(sku_id_to_product).fillna('Water Bottle')
         topcat_subcat = dataset.groupby(['CATEGORY', 'Name_of_Product']).agg({'Amount': 'sum'}).sort_values(
             by="Amount", ascending=False)[:21]
         topcat_subcat = topcat_subcat[["Amount"]].astype(int)
@@ -162,38 +173,32 @@ class AnalyticsPage:
 
         total_revenue = dataset['Amount'].sum()
 
-        plt.rcParams["figure.figsize"] = (36, 36)
+        plt.rcParams["figure.figsize"] = (40, 40)
         fig, ax = plt.subplots()
         ax.axis('equal')
         width = 0.1
         outer_colors = ['#e57101', '#008062', '#961c2f']
         gradient_colors = ['#ffd1a4', '#febe80', '#feac5c', "#feac5c", "#fe9c3e", "#fe8b1c", '#FE840E',
-                        '#9bffe8', '#43ffd3', '#00e9b3', "#00bc91", "#00a680", '#009B77', "#00906f",
-                        '#eda1ad', '#e88695', '#e47385', '#e16175', "#da3a53", "#d62944", '#c4253e']
-        darkened_colors = []
-        for color in gradient_colors:
-            rgb_values = mcolors.hex2color(color)
-            darkened_rgb = [max(0, value - 0.125) for value in rgb_values]  # Reduce each RGB component by 0.2
-            darkened_hex = mcolors.rgb2hex(darkened_rgb)
-            darkened_colors.append(darkened_hex)
-        inner_colors = darkened_colors
+                '#9bffe8', '#43ffd3', '#00e9b3', "#00bc91", "#00a680", '#009B77', "#00906f",
+                '#eda1ad', '#e88695', '#e47385', '#e16175', "#da3a53", "#d62944", '#c4253e']
+        inner_colors=gradient_colors
         ax.pie(topcat_subcat_1['Amount'], radius=1, labels=topcat_subcat_1['CATEGORY'], colors=outer_colors,
-            wedgeprops=dict(edgecolor='w'), textprops={'fontsize': 30, 'color': 'white', 'weight': 'bold'})
+            wedgeprops=dict(edgecolor='w'), textprops={'fontsize': 30, 'weight': 'bold'})
         pie2 = ax.pie(topcat_subcat['Amount'], radius=1 - (width / 2), labels=topcat_subcat['Name_of_Product'],
               autopct=self.autopct_format(topcat_subcat['Amount']), labeldistance=0.7, colors=inner_colors,
               wedgeprops=dict(edgecolor='w'), pctdistance=0.57, rotatelabels=True,
-              textprops={'fontsize': 30, 'color': 'white', 'weight': 'bold'})
+              textprops={'fontsize': 30, 'weight': 'light'})
 
         fraction_text_list = pie2[2]
         for text in fraction_text_list:
             text.set_rotation(315)
-        centre_circle = plt.Circle((0, 0), 0.6, fc='black')  # Set the background color to black
+        centre_circle = plt.Circle((0, 0), 0.6, fc='white')  # Set the background color to black
         fig = plt.gcf()
         fig.gca().add_artist(centre_circle)
-        ax.annotate('Total Revenue \n ₹' + str(total_revenue), color='white', xy=(0, 0), fontsize=75, ha="center",
-                    bbox=dict(boxstyle='round', facecolor='black', edgecolor='none'))  # Set the background color to black
+        ax.annotate('Total Revenue \n ₹' + str(total_revenue), xy=(0, 0), fontsize=75, ha="center",
+                    bbox=dict(boxstyle='round', color='#2195c5', edgecolor='none'))  # Set the background color to black
 
-        fig.patch.set_alpha(0.0)  # Set the background color of the entire figure to black
+        # fig.patch.set_alpha(0.0)  # Set the background color of the entire figure to black
 
         st.pyplot(fig)
 

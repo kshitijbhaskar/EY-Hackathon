@@ -38,25 +38,34 @@ def main():
 
     if selected_option == "Analytics":
         analytics_page = AnalyticsPage()
-        analytics_page.run_web_app()
+        with st.spinner('This can take a while sometimes...'):
+            # Simulate a delay
+            analytics_page.run_web_app()    
+            # st.balloons()
     elif selected_option == "Modify Inventory":
         modify_inventory_app = ModifyInventory()
-        modify_inventory_app.run_web_app()
+        with st.spinner('This can take a while sometimes...'):
+            modify_inventory_app.run_web_app()
     elif selected_option == "Smart Suggest":
         smart_suggest_app = SmartSuggest()
-        smart_suggest_app.run_web_app()
+        with st.spinner('This can take a while sometimes...'):
+            smart_suggest_app.run_web_app()
     elif selected_option == "Restocking Alert":
         restocking_alert_app = RestockingAlert()
-        restocking_alert_app.run_web_app()
+        with st.spinner('This can take a while sometimes...'):
+            restocking_alert_app.run_web_app()
     elif selected_option == "AI Negotiator":
         ai_negotiator_app = AINegotiator()  # Use AINegotiator from the new script
-        ai_negotiator_app.run_web_app()
+        with st.spinner('This can take a while sometimes...'):
+            ai_negotiator_app.run_web_app()
     elif selected_option == "Personalised Marketing":
         personalised_marketing = PersonalisedMarketing()
-        personalised_marketing.run_web_app()
+        with st.spinner('This can take a while sometimes...'):
+            personalised_marketing.run_web_app()
     elif selected_option == "Sky Assist":
         chat_bot = ChatBot()
-        chat_bot.run_web_app()
+        with st.spinner('This can take a while sometimes...'):
+            chat_bot.run_web_app()
 
 if __name__ == "__main__":
     main()
