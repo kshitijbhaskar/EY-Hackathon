@@ -93,9 +93,17 @@ def final_message(input, model="gpt-3.5-turbo", temperature=0):
     return output.choices[0].message.content
 
 @st.cache_data
-def text_to_speech(response):
+def text_to_speech(response,selected_language):
+    language = "en"
+    if selected_language == "English":
+        language = "en"
+    elif selected_language == "Hindi":
+        language = "hi"
+    elif selected_language == "Bengali":
+        language = "bn"
     sound_file = BytesIO()
-    tts = gTTS(response, tld='com', lang='hi')
+    print(language)
+    tts = gTTS(response, lang=language)
     tts.write_to_fp(sound_file)
     return sound_file
 
@@ -176,7 +184,7 @@ selected_option = st.sidebar.radio("Choose a tab", ["Selling", "Inventory", "Buy
 
 if selected_option == "Selling":
     @st.cache_data
-    def read_and_analyze_excel(file_path, model="gpt-3.5-turbo", temperature=0):
+    def read_and_analyze_excel(file_path, selected_language):
         # Read the Excel file using pandas
         df = pd.read_excel(file_path,nrows=125)
 
@@ -189,7 +197,7 @@ if selected_option == "Selling":
         system_message = f"Hourly Sales Trend in a week:"+"\n".join([f"{name}, {days}, {insight}" for name, days, insight in zip(product_name, days_left, insights)]) 
 
         # Generate user message based on the extracted information
-        user_message = "Based on the Sales Data generate Insights or Suggestions which may me missed by the retail shopkeeper when he looks at this data. You can include as much analytics as you can. I need only top 3 top points in a concise way!"
+        user_message = f"Please respond in {selected_language} language, Based on the Sales Data generate Insights or Suggestions which may me missed by the retail shopkeeper when he looks at this data. You can include as much analytics as you can. I need only top 3 top points in a concise way!"
 
         # Generate input for OpenAI based on analysis
         input = [
@@ -206,14 +214,13 @@ if selected_option == "Selling":
 
         # return response.choices[0].content
         output = client.chat.completions.create(
-            model=model,
+            model="gpt-3.5-turbo",
             messages=input,
-            temperature=temperature,
-
+            temperature=0.5,
         )
         return output.choices[0].message.content
     @st.cache_data
-    def read_and_analyze_excel1(file_path, model="gpt-3.5-turbo", temperature=0):
+    def read_and_analyze_excel1(file_path, selected_language):
         # Read the Excel file using pandas
         df = pd.read_excel(file_path,nrows=125)
 
@@ -227,7 +234,7 @@ if selected_option == "Selling":
         system_message = f"Data on: category, gender, age and amount contributed wise:"+"\n".join([f"{category}, {gender}, {age}, {amount}" for category, gender, age, amount in zip(category, gender, age, amount)]) 
 
         # Generate user message based on the extracted information
-        user_message = "Based on the Category Data generate Insights or Suggestions which may include most popular items in a given category (i.e. gender, age, etc) and the contribution amount of each category to the total revenue. Protein Supplements has 35 percent, Grocery has 45 percent and Stationery has 20 percent contribution to the total revenue/amount"
+        user_message = f"Please respond in {selected_language} language, Based on the Category Data generate Insights or Suggestions which may include most popular items in a given category (i.e. gender, age, etc) and the contribution amount of each category to the total revenue. Protein Supplements has 35 percent, Grocery has 45 percent and Stationery has 20 percent contribution to the total revenue/amount"
 
         # Generate input for OpenAI based on analysis
         input = [
@@ -244,9 +251,9 @@ if selected_option == "Selling":
 
         # return response.choices[0].content
         output = client.chat.completions.create(
-            model=model,
+            model="gpt-3.5-turbo",
             messages=input,
-            temperature=temperature,
+            temperature=0.5,
 
         )
         return output.choices[0].message.content
@@ -256,11 +263,13 @@ if selected_option == "Selling":
 
     # Example usage
     with st.spinner('AI is generating your content. This can take a while sometimes...'):
+        selected_language = st.selectbox("Select Language", ["English", "Hindi", "Bengali"])
+        
         file_path = 'smart_sell.xlsx'
-        response = read_and_analyze_excel(file_path)
-        response1 = read_and_analyze_excel1('Sky_smart_suggest.xlsx')
+        response = read_and_analyze_excel(file_path,selected_language)
+        response1 = read_and_analyze_excel1('Sky_smart_suggest.xlsx',selected_language)
         st.write("Play the Audio")
-        sound_file = text_to_speech(response1)
+        sound_file = text_to_speech(response1,selected_language)
         st.audio(sound_file)
         st.divider()
         container = st.container(border=True)
@@ -300,7 +309,7 @@ if selected_option == "Selling":
         # Display the plot in Streamlit
         st.pyplot(fig)
         st.write("Play the Audio")
-        sound_file = text_to_speech(response)
+        sound_file = text_to_speech(response,selected_language)
         st.audio(sound_file)
         st.divider()
         container = st.container(border=True)
@@ -308,6 +317,8 @@ if selected_option == "Selling":
         st.divider()
 
 elif selected_option == "Inventory":
+    selected_language = st.selectbox("Select Language", ["English", "Hindi", "Bengali"])
+
     st.divider()
     # st.markdown(
     #     f"""
@@ -344,7 +355,7 @@ elif selected_option == "Inventory":
                 # time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
                 messages =  [
                 {'role':'system',
-                'content':"""You are an assistant at Assawa Store, specializing in efficient inventory management. Your responsibility includes issuing alerts for items requiring restocking and estimating the remaining days before they run out of stock, and insights overview. Input provides item name along with the corresponding number of days until depletion and one insights"""},
+                'content':f"""Please respond in {selected_language} language, You are an assistant at Assawa Store, specializing in efficient inventory management. Your responsibility includes issuing alerts for items requiring restocking and estimating the remaining days before they run out of stock, and insights overview. Input provides item name along with the corresponding number of days until depletion and one insights"""},
                 {'role':'user',
                 'content':f"""{name}, {days}, {insight}"""},
                 ]
@@ -368,7 +379,7 @@ elif selected_option == "Inventory":
                 # time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
                 messages =  [
                 {'role':'system',
-                'content':f"""You are an assistant at Assawa Store, specializing in efficient inventory management. You need to generate insights or suggestions about what to do if this product is going to expire in less than 30 days(expiry for this item is {expiry}days). If its expiry is not less than 30 days then just say "No suggestions for {name}". I just need top 3 suggestions, format your response efficiently."""},
+                'content':f"""Please respond in {selected_language} language, You are an assistant at Assawa Store, specializing in efficient inventory management. You need to generate insights or suggestions about what to do if this product is going to expire in less than 30 days(expiry for this item is {expiry}days). If its expiry is not less than 30 days then just say "No suggestions for {name}". I just need top 3 suggestions, format your response efficiently."""},
                 {'role':'user',
                 'content':f"""{name}, {expiry}, {insight}"""},
                 ]
@@ -392,7 +403,7 @@ elif selected_option == "Inventory":
                         # time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
                         messages =  [
                         {'role':'system',
-                        'content':f"""You are an assistant at Assawa Store, specializing in efficient inventory management. You need to generate insights or suggestions about what to do if this product is going to expire in less than 30 days(expiry for this item is {expiry}days). If its expiry is not less than 30 days then just say "No suggestions for {name}". I just need top 3 suggestions, format your response efficiently."""},
+                        'content':f"""Please respond in {selected_language} language, You are an assistant at Assawa Store, specializing in efficient inventory management. You need to generate insights or suggestions about what to do if this product is going to expire in less than 30 days(expiry for this item is {expiry}days). If its expiry is not less than 30 days then just say "No suggestions for {name}". I just need top 3 suggestions, format your response efficiently."""},
                         {'role':'user',
                         'content':f"""{name}, {expiry}, {insight}"""},
                         ]
