@@ -10,6 +10,7 @@ import streamlit as st
 # from pages.ChatBot import ChatBot
 # from FigmaUI import FigmaUI
 import sqlite3
+from io import BytesIO
 from openai import OpenAI
 
 st.set_page_config(page_title="Sky: Inventory Management System", page_icon=":bar_chart:")
@@ -144,7 +145,7 @@ def read_and_analyze_excel(file_path, model="gpt-3.5-turbo", temperature=0):
     system_message = f"Hourly Sales Trend in a week:"+"\n".join([f"{name}, {days}, {insight}" for name, days, insight in zip(product_name, days_left, insights)]) 
 
     # Generate user message based on the extracted information
-    user_message = "Based on the Sales Data generate Insights or Suggestions which may me missed by the retail shopkeeper when he looks at this data. You can include as much analytics as you can"
+    user_message = "Please respond in Bengali. Based on the Sales Data generate Insights or Suggestions which may me missed by the retail shopkeeper when he looks at this data. You can include as much analytics as you can"
 
     # Generate input for OpenAI based on analysis
     input = [
@@ -176,3 +177,36 @@ with st.spinner('AI is generating your content. This can take a while sometimes.
     file_path = 'smart_sell.xlsx'
     response = read_and_analyze_excel(file_path)
     st.write(response)
+    # speech_file_path = BytesIO()
+    response5 = client.audio.speech.create(
+        model="tts-1",
+        voice="nova",
+        input=response
+    )
+
+    # Extract the raw bytes from the HTTP response content
+    audio_bytes = response5.content
+
+    # Convert the MP3 data to BytesIO
+    audio_bytesio = BytesIO(audio_bytes)
+
+    # Display the audio in Streamlit
+    st.audio(audio_bytesio, format="audio/mp3")
+
+    response6 = client.images.generate(
+    model="dall-e-3",
+    prompt="a white siamese cat",
+    size="1024x1024",
+    quality="standard",
+    n=1,
+    )
+
+    st.write(response6)
+    # response.stream_to_file(speech_file_path)
+    # sound_file = BytesIO()
+    # tts = gTTS(response, lang=language)
+    # tts.write_to_fp(sound_file)
+    # return sound_file
+
+    # sound_file = text_to_speech(response1,selected_language)
+    # st.audio(sound_file)

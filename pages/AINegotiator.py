@@ -205,7 +205,7 @@ def display_message_generators():
         #         "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
         #         "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
         #     })
-        st.session_state['df1'] = pd.read_excel('item_deals.xlsx', sheet_name='Updated')
+        st.session_state['df1'] = pd.read_excel('item_deals.xlsx', sheet_name='Initial')
         st.success("Message sent successfully!")
 
 def display_negotiator():

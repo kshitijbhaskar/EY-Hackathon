@@ -14,7 +14,7 @@ def generate_joke():
     joke_response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=joke_prompt,
-        temperature=1.8
+        temperature=0.8
     )
     return joke_response.choices[0].message.content
 
@@ -29,7 +29,7 @@ def generate_upcoming_occasions():
     occasion_response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=occasion_prompt,
-        temperature=1.5
+        temperature=0.5
     )
     return occasion_response.choices[0].message.content
 

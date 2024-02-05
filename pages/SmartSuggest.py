@@ -4,7 +4,8 @@ import calendar
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime
+import io
+from datetime import datetime,date
 from gtts import gTTS
 from io import BytesIO
 from openai import OpenAI
@@ -13,7 +14,7 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def predict_price(sku_id):
   sku_id = sku_id
-  return 69
+  return 1000
 
 @staticmethod
 def plot_rates(analytics_df):
@@ -27,6 +28,7 @@ def plot_rates(analytics_df):
     ax.set_ylabel('Rate')
     ax.legend()
     ax.grid(True)
+    plt.xticks(rotation=90)
 
     return fig, ax
 
@@ -92,6 +94,7 @@ def final_message(input, model="gpt-3.5-turbo", temperature=0):
     )
     return output.choices[0].message.content
 
+
 @st.cache_data
 def text_to_speech(response,selected_language):
     language = "en"
@@ -101,48 +104,66 @@ def text_to_speech(response,selected_language):
         language = "hi"
     elif selected_language == "Bengali":
         language = "bn"
-    sound_file = BytesIO()
-    print(language)
-    tts = gTTS(response, lang=language)
-    tts.write_to_fp(sound_file)
-    return sound_file
+    output = client.audio.speech.create(
+        model="tts-1",
+        voice="nova",
+        input=response
+    )
+    audio_bytes = output.content
 
-@st.cache_resource
+    # Convert the MP3 data to BytesIO
+    audio_bytesio = BytesIO(audio_bytes)
+    return audio_bytesio
+
+@st.cache_data
 def get_top_suggestions_for_month(month_number):
     conn = sqlite3.connect("inventory.db")
     cursor = conn.cursor()
 
     # Get items added in the selected month
-    cursor.execute("SELECT sku_id, item_name, added_datetime FROM items WHERE strftime('%m', added_datetime) = ?",
-                    (f"{month_number:02d}",))
+    cursor.execute("SELECT sku_id, item_name, quantity, added_datetime FROM items WHERE strftime('%m', added_datetime) = ?",
+                   (f"{month_number:02d}",))
     items_added_in_month = cursor.fetchall()
+
+    # Read predicted price increase from analytics.xlsx
+    analytics_df = pd.read_excel("analytics.xlsx")
+    price_increase_dict = dict(zip(analytics_df['SKU_ID'], analytics_df['Predicted Price after 15 days (%)']))
 
     suggestions = []
     increased_sales_items = set()
 
-    for sku_id, item_name, added_datetime in items_added_in_month:
+    for sku_id, item_name, quantity, added_datetime in items_added_in_month:
         old_price = fetch_old_price(sku_id)
         new_price = predict_price(sku_id)
 
         if old_price is not None and new_price is not None:
-            price_increase = (new_price - old_price) / old_price
-            suggestions.append({"sku_id": sku_id, "item_name": item_name, "price_increase": price_increase})
+            profit_percent = (new_price - old_price) / old_price
+            predicted_price_increase = price_increase_dict.get(sku_id, 0)
+
+            suggestions.append({
+                "sku_id": sku_id,
+                "item_name": item_name,
+                "quantity": quantity,
+                "added_datetime": added_datetime,
+                "profit_percent": profit_percent,
+                "predicted_price_increase": predicted_price_increase
+            })
 
             # Check if sales increased compared to the previous month
             cursor.execute("SELECT COUNT(*) FROM items WHERE sku_id=? AND strftime('%m', added_datetime) = ?",
-                            (sku_id, f"{month_number-1:02d}"))
+                           (sku_id, f"{month_number:02d}"))
             # count = cursor.fetchone()[0]
 
             # if count > 0:
             increased_sales_items.add(item_name)
 
-    # Sort suggestions by price increase in descending order
-    suggestions.sort(key=lambda x: x["price_increase"], reverse=True)
+    # Sort suggestions by profit_percent in descending order
+    suggestions.sort(key=lambda x: x["profit_percent"], reverse=True)
 
     conn.close()
 
-    # Return the top three suggestions and items with increased sales
-    return suggestions[:3], list(increased_sales_items)
+    # Return the top ten suggestions and items with increased sales
+    return suggestions[:10], list(increased_sales_items)
 
 @st.cache_data
 def display_suggestion_card(suggestion):
@@ -166,7 +187,6 @@ def display_suggestion_card(suggestion):
         else:
             st.warning(f"Item with SKU ID {suggestion['sku_id']} not found in the inventory.")
 
-st.title("Age, Gender and Category-wise Sales Distribution")
 
 
 # Display header message
@@ -183,6 +203,7 @@ selected_option = st.sidebar.radio("Choose a tab", ["Selling", "Inventory", "Buy
 # response1 = final_message(messages_5, temperature=1)
 
 if selected_option == "Selling":
+    st.title("Age, Gender and Category-wise Sales Distribution")
     @st.cache_data
     def read_and_analyze_excel(file_path, selected_language):
         # Read the Excel file using pandas
@@ -216,7 +237,7 @@ if selected_option == "Selling":
         output = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=input,
-            temperature=0.5,
+            temperature=0.75,
         )
         return output.choices[0].message.content
     @st.cache_data
@@ -253,7 +274,7 @@ if selected_option == "Selling":
         output = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=input,
-            temperature=0.5,
+            temperature=0.75,
 
         )
         return output.choices[0].message.content
@@ -276,7 +297,7 @@ if selected_option == "Selling":
         container.write(response1)
         st.divider()
 
-        st.title("Time of Day Sales Pattern")
+        st.title("Time of the Day Sales Pattern")
 
         # Read data from Excel file
         file_path = 'smart_sell.xlsx'
@@ -317,8 +338,9 @@ if selected_option == "Selling":
         st.divider()
 
 elif selected_option == "Inventory":
-    selected_language = st.selectbox("Select Language", ["English", "Hindi", "Bengali"])
 
+    st.title("Smart Inventory Restocking")
+    selected_language = st.selectbox("Select Language", ["English", "Hindi", "Bengali"])
     st.divider()
     # st.markdown(
     #     f"""
@@ -350,18 +372,18 @@ elif selected_option == "Inventory":
             for index, row in first_5_items.iterrows():
                 name = row['Product Name']
                 days = row['Days left']
-                insight = row['Insights']
+                profit = row['Profit']
                 
                 # time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
                 messages =  [
                 {'role':'system',
-                'content':f"""Please respond in {selected_language} language, You are an assistant at Assawa Store, specializing in efficient inventory management. Your responsibility includes issuing alerts for items requiring restocking and estimating the remaining days before they run out of stock, and insights overview. Input provides item name along with the corresponding number of days until depletion and one insights"""},
+                'content':f"""Please respond in {selected_language} language, always respond as if you know all the data I've provided you and you have analysed the entire data as you are an insights providing assistant at Assawa Store for example don't say "based on data provided" instead say "on analysing your inventory and sales data" or something similar, specializing in efficient inventory management. I need you to SUGGEST me possible discount percentage for each item, given that I'm facing some serious competition this month in the market. Data is fed to you inorder of - product name, days left in stock and profit percentage."""},
                 {'role':'user',
-                'content':f"""{name}, {days}, {insight}"""},
+                'content':f"""{name}, {days}, {profit}"""},
                 ]
                 # print(response)
                 with st.spinner('Loading items. Please wait...'):
-                    response = final_message(messages, temperature=1)
+                    response = final_message(messages, temperature=0.8)
                     st.warning(response)
                 
         # Adding "Show More" button
@@ -416,17 +438,47 @@ elif selected_option == "Inventory":
         
 
 elif selected_option == "Buying":
+    st.title("Smart Buying Suggestions")
     selected_language = st.selectbox("Select Language", ["English", "Hindi", "Bengali"])
-
     # Get the current ongoing month
     current_month = datetime.now().strftime("%B")
-
     # User input for the month with the default value set to the current month
     selected_month = st.selectbox("Select Month:", list(calendar.month_name)[1:], index=list(calendar.month_name).index(current_month)-1)
 
     month_number = list(calendar.month_name).index(selected_month)
     suggestions, increased_sales_items = get_top_suggestions_for_month(month_number)
     # Process items added in the selected month
+    messages_6 =  [
+    {'role':'system',
+    'content':f"""My inventory: {suggestions}"""},
+    {'role':'user',
+    'content':f"""Please respond in {selected_language} language, based on my inventory and considering that I want insights for the month {selected_month} and upcoming festivals and events that happen this month in New Delhi, India and today is {date.today()}, can you recommend the percentage I should/can increase in quantity considering the provided price increase of each item after 15 days along with your reasoning behind it (try to also consider the type of the item, predicted price after 15 days and current day and time of the year)? To be more specific can you also suggest the date before which I should increase its stock (don't simply assume it to be after 15 days, you should choose this date according to all the information provided to you)? Also can you include a table in your response so that it is easier to see what percentage increase in stock you recommend for each item?"""},
+    ]
+    response2 = final_message(messages_6, temperature=0.8)
+    # print(response2)
+    st.write("Play the Audio")
+    sound_file = text_to_speech(response2,selected_language)
+    st.audio(sound_file)
+    st.divider()
+    response2
+    # Extract the CSV portion from the response
+    # Remove leading/trailing spaces from column names
+    # start_index = response2.find('| SKU ID')
+    # end_index = response2.find('Please note that', start_index)
+    # csv_data = response2[start_index:end_index]
+
+    # # Read CSV data into a Pandas DataFrame
+    # df = pd.read_csv(io.StringIO(csv_data), sep='|', skipinitialspace=True)
+
+    # df.columns = df.columns.str.strip()
+
+    # # Set 'SKU ID' as the index
+    # st.line_chart(df.set_index('SKU ID'))
+    # # Display the DataFrame
+    # st.write(df)
+
+    # # Plot the data using line_chart
+    # st.line_chart(df.set_index('SKU ID'))
     messages_4 =  [
     {'role':'system',
     'content':"""As the intelligent assistant for Assawa grocery stores, you deliver comprehensive pop-up alerts (80-100 words) guiding the restocking of key items to maximize profits. In your suggestions, you consider the current month, analyzing the demand for grocery items based on local trends, festivals in the Indian month, prevailing weather conditions, and other factors such as holidays. Your insights aim to optimize the store's inventory and cater to the specific needs of customers during various occasions and seasons."""},
