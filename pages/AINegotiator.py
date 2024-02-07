@@ -1,9 +1,36 @@
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
+from twilio.rest import Client
 from openai import OpenAI
+import json
+
+# Your Account SID and Auth Token from twilio.com/console
+account_sid = 'ACbc046d394f28e67d5430a662661dd8d3'
+auth_token = 'bff3a3c73653b6e5d605fcffb6cc1e8f'
+client1 = Client(account_sid, auth_token)
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+def final_message_WP(chat_history, user_number, model="gpt-3.5-turbo", temperature=0.9):
+    user_id = f"whatsapp:{user_number}"
+    user_offer = chat_history[user_id]
+
+    input_messages = [
+        {"role": "system", "content": f"**VERY IMPORTANT: DONT USE '{user_id}' ANYWHERE IN YOUR RESPONSE** AND ONLY GIVE THE CLOSING MESSAGE **. Analyse the offers from both wholesalers. Accept ONLY the LOWEST price offers for each item. Provide a concise closing whatsapp reply for the wholesaler {user_id} LISTING the offer for each item FROM {user_offer} which you accept."},
+        {"role": "user", "content": f"{chat_history}"}
+    ]
+
+    output = client.chat.completions.create(
+        model=model,
+        messages=input_messages,
+        temperature=temperature,
+    )
+
+    return output.choices[0].message.content
+
+
+
 @st.cache_data
 def final_message(input, model="gpt-3.5-turbo", temperature=0):
 
@@ -150,6 +177,8 @@ user = "Devansh Assawa"
 #     st.session_state['responses1'] = []
 # if 'responses2' not in st.session_state:
 #     st.session_state['responses2'] = []
+if 'wp_message' not in st.session_state:
+    st.session_state['wp_message'] = ""
 if 'items' not in st.session_state:
     st.session_state['items'] = ""
 if 'quantities' not in st.session_state:
@@ -181,31 +210,28 @@ def display_message_generators():
         quantity = st.number_input(f"Quantity for {item}:", min_value=1, step=1, format="%d", key=item,
                                     value=st.session_state['quantities'].get(item, 1))
         st.session_state['quantities'][item] = quantity
-
     if st.button("Generate Template"):
         template = generate_message_template(st.session_state['quantities'])
         messages_6 =  [
         {'role':'system',
-        'content':"""You are an AI negotiator representing Mr. Assawa, a grocery store owner. Your task is to compose a message for wholesalers, inquiring about the prices of specified items and their quantities. You will receive input containing details and a list of items that we need to purchase."""},
+        'content':"""You are an AI negotiator representing Mr. Assawa, a grocery store owner. Your task is to compose a message for wholesalers, inquiring about the prices of specified items and their quantities. You will receive input containing details and a list of items that we need to purchase. Format a proper whatsapp message which can be sent."""},
         {'role':'user',
         'content':f""" {template}."""},
         ]
         response2 = final_message(messages_6, temperature=1)
-        st.text_area("Message Template", response2, height=200)
-
+        st.session_state['wp_message'] = st.text_area("Message Template", response2, height=200)
     if st.button("Send Message"):
-        # item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
-        # for i, item in enumerate(item_list, start=1):
-        #     st.session_state['responses1'].append({
-        #         "wholesaler_name": f"Wholesaler {i}",
-        #         "message": f"Example Message for {item}",
-        #         "price": 100 + i * 10,
-        #         "shipping_charges": 10 + i * 2,
-        #         "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
-        #         "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
-        #         "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
-        #     })
         st.session_state['df1'] = pd.read_excel('item_deals.xlsx', sheet_name='Initial')
+        client1.messages.create(
+            body=st.session_state['wp_message'],
+            from_='whatsapp:+14155238886',
+            to=f'whatsapp:+919798794160'
+        )
+        client1.messages.create(
+            body=st.session_state['wp_message'],
+            from_='whatsapp:+14155238886',
+            to=f'whatsapp:+916297885004'
+        )
         st.success("Message sent successfully!")
 
 def display_negotiator():
@@ -250,23 +276,25 @@ def display_negotiator():
 
     st.subheader("Negotiation Details Table")
     st.write(st.session_state['df1'])
-    if st.button("Negotiate Deal"):
-        # item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
-        # for i, item in enumerate(item_list, start=1):
-        #     st.session_state['responses2'].append({
-        #         "wholesaler_name": f"Wholesaler {i}",
-        #         "message": f"Example Message for {item}",
-        #         "price": 100 + i * 10,
-        #         "shipping_charges": 10 + i * 2,
-        #         "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
-        #         "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
-        #         "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
-        #     })
-        #     map_data['LAT'].append(response['latitude'])
-        #     map_data['LON'].append(response['longitude'])
-        # st.session_state['df2'] = pd.read_excel('best deal table.xlsx')
-        st.session_state['df2'] = pd.read_excel('item_deals.xlsx', sheet_name='Updated')
-        st.success("Deal negotiated successfully!")
+    st.session_state['df2'] = pd.read_excel('item_deals.xlsx', sheet_name='Updated')
+
+    # if st.button("Negotiate Deal"):
+    #     # item_list = list(set([item.strip() for item in st.session_state['items'].split(',') if item.strip()]))
+    #     # for i, item in enumerate(item_list, start=1):
+    #     #     st.session_state['responses2'].append({
+    #     #         "wholesaler_name": f"Wholesaler {i}",
+    #     #         "message": f"Example Message for {item}",
+    #     #         "price": 100 + i * 10,
+    #     #         "shipping_charges": 10 + i * 2,
+    #     #         "delivery_date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
+    #     #         "latitude": 28.6278 + i * 0.1,  # Adjust the latitude for each wholesaler
+    #     #         "longitude": 77.2190 + i * 0.1  # Adjust the longitude for each wholesaler
+    #     #     })
+    #     #     map_data['LAT'].append(response['latitude'])
+    #     #     map_data['LON'].append(response['longitude'])
+    #     # st.session_state['df2'] = pd.read_excel('best deal table.xlsx')
+    #     st.session_state['df2'] = pd.read_excel('item_deals.xlsx', sheet_name='Updated')
+    #     st.success("Deal negotiated successfully!")
 
 def display_best_deal():
     st.header("Best Deal")
@@ -315,8 +343,30 @@ def display_best_deal():
     st.subheader("Best Deal Table")
     st.write(st.session_state['df2'])
 
-    if st.button("Place Order"):
+    if st.button("Finalise Deals", type="primary"):
         # Your logic to fill the "Best Deal" entries with respective values
+
+        with open('C:\\Users\\kshit\\Downloads\\EY\\chat_history.json', 'r') as f:
+            chat_history = json.load(f)
+
+        chat_response1 = final_message_WP(chat_history, "+919798794160")
+        chat_response2 = final_message_WP(chat_history, "+916297885004")
+
+        print("-----------------------------")
+        print(chat_response1)
+        print("****************************")
+        print(chat_response2)
+        print("-----------------------------")
+        client1.messages.create(
+            body=chat_response1,
+            from_='whatsapp:+14155238886',
+            to='whatsapp:+919798794160'
+        )
+        client1.messages.create(
+            body=chat_response2,
+            from_='whatsapp:+14155238886',
+            to='whatsapp:+916297885004'
+        )
         st.success("Order placed successfully!")
 
 st.title("AI Negotiator")

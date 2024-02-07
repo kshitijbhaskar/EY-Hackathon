@@ -9,6 +9,7 @@ from datetime import datetime,date
 from gtts import gTTS
 from io import BytesIO
 from openai import OpenAI
+import time
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -20,10 +21,10 @@ def predict_price(sku_id):
 def plot_rates(analytics_df):
     # Plotting selling rates and buying rates
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(analytics_df['SKU_ID'], analytics_df['Selling Rate'], label='Selling Rate', marker='o')
-    ax.plot(analytics_df['SKU_ID'], analytics_df['Buying Rate'], label='Buying Rate', marker='o')
+    ax.plot(analytics_df['SKU_ID'], analytics_df['Selling Rate'], label='Predicted Price', marker='o')
+    ax.plot(analytics_df['SKU_ID'], analytics_df['Buying Rate'], label='Current Price', marker='o')
 
-    ax.set_title('Selling and Buying Rates Over SKU Units')
+    ax.set_title('Predicted Rates of Items after 15 days')
     ax.set_xlabel('SKU Unit')
     ax.set_ylabel('Rate')
     ax.legend()
@@ -84,13 +85,21 @@ def is_sku_in_inventory(sku_id):
     return count > 0
 
 @st.cache_data
-def final_message(input, model="gpt-3.5-turbo", temperature=0):
-
+def final_message(input, model="gpt-4-turbo-preview", temperature=0.5):
+    pre_condition_input = {
+        'role': 'system',
+        'content': "**VERY IMPORTANT INSTRUCTIONS: DON'T START YOUR RESPONSE WITH WORDS LIKE: BASED ON PROVIDED DATA, ACCORDING TO THE GIVEN INPUT, ETC BECAUSE YOU NEED TO UNDERSTAND THAT I'M NOT GIVING YOU THESE PROMPT INSTEAD YOU'RE RETRIEVING ALL THE INFORMATION IN THE BACK-END ITSELF AUTOMATICALLY! ALL THE RESPONSES THAT YOU GENERATED SHOULD BE IN THIRD PERSON AS IF YOU'RE NOT A CHATBOT BUT INSTEAD YOU'RE A TOOL TO GENERATE VALUABLE INSIGHTS AND SUGGESTIONS POPUPS IN A SMART APP TO HELP LOCAL RETAILERS CRUNCH BIG INFORMATION INTO EACH TO UNDERSTAND TEXT!**"
+    }
+    if isinstance(input, list):
+        input = ' '.join(map(str, input))
+    user_input = {
+        'role': 'user',
+        'content': input
+    }
     output = client.chat.completions.create(
         model=model,
-        messages=input,
+        messages=[pre_condition_input, user_input],
         temperature=temperature,
-
     )
     return output.choices[0].message.content
 
@@ -284,6 +293,7 @@ if selected_option == "Selling":
 
     # Example usage
     with st.spinner('AI is generating your content. This can take a while sometimes...'):
+        time.sleep(5)
         selected_language = st.selectbox("Select Language", ["English", "Hindi", "Bengali"])
         
         file_path = 'smart_sell.xlsx'
@@ -364,6 +374,7 @@ elif selected_option == "Inventory":
     
     with st.spinner('AI is generating your content. This can take a while sometimes...'):
         # Read data from analytics.xlsx
+        time.sleep(5)
         analytics_df = pd.read_excel("analytics.xlsx")
 
         first_5_items = analytics_df.head(5)
@@ -372,17 +383,18 @@ elif selected_option == "Inventory":
             for index, row in first_5_items.iterrows():
                 name = row['Product Name']
                 days = row['Days left']
-                profit = row['Profit']
+                insight = row['Insights']
                 
                 # time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
                 messages =  [
                 {'role':'system',
-                'content':f"""Please respond in {selected_language} language, always respond as if you know all the data I've provided you and you have analysed the entire data as you are an insights providing assistant at Assawa Store for example don't say "based on data provided" instead say "on analysing your inventory and sales data" or something similar, specializing in efficient inventory management. I need you to SUGGEST me possible discount percentage for each item, given that I'm facing some serious competition this month in the market. Data is fed to you inorder of - product name, days left in stock and profit percentage."""},
+                'content':f"""Please respond in {selected_language} language, always respond as if you know all the data I've provided you and you have analysed the entire data as you are an insights providing assistant at Assawa Store for example don't say things like "based on data provided" or something similar, specializing in efficient inventory management. I need you to SUGGEST me possible amount to be restocked for each item, given that I'm facing some serious competition this month in the market. Data is fed to you inorder of - product name, days left in stock and insights."""},
                 {'role':'user',
-                'content':f"""{name}, {days}, {profit}"""},
+                'content':f"""{name}, {days}, {insight}"""},
                 ]
                 # print(response)
                 with st.spinner('Loading items. Please wait...'):
+                    time.sleep(2)
                     response = final_message(messages, temperature=0.8)
                     st.warning(response)
                 
@@ -397,13 +409,14 @@ elif selected_option == "Inventory":
                 name = row['Product Name']
                 expiry = row['Expiry']
                 insight = row['Insights']
+                profit = row['Profit Percent']
                 
                 # time_to_last = self.calculate_time_to_last(selling_rate, current_stock)
                 messages =  [
                 {'role':'system',
-                'content':f"""Please respond in {selected_language} language, You are an assistant at Assawa Store, specializing in efficient inventory management. You need to generate insights or suggestions about what to do if this product is going to expire in less than 30 days(expiry for this item is {expiry}days). If its expiry is not less than 30 days then just say "No suggestions for {name}". I just need top 3 suggestions, format your response efficiently."""},
+                'content':f"""Please respond in {selected_language} language, You are an assistant at Assawa Store, specializing in efficient inventory management. You need to generate a possible discount percentage insights or suggestions about what to do if this product is going to expire in less than 30 days(expiry for this item is {expiry}days). If its expiry is not less than 30 days then just say "No suggestions for {name}". I just need top 3 suggestions along with your analysis on the data like profit , format your response efficiently."""},
                 {'role':'user',
-                'content':f"""{name}, {expiry}, {insight}"""},
+                'content':f"""name:{name}, expiry date in:{expiry}, profit percentage:{profit},insights: {insight}"""},
                 ]
                 # print(response)
                 with st.spinner('Loading items. Please wait...'):
@@ -452,12 +465,12 @@ elif selected_option == "Buying":
     {'role':'system',
     'content':f"""My inventory: {suggestions}"""},
     {'role':'user',
-    'content':f"""Please respond in {selected_language} language, based on my inventory and considering that I want insights for the month {selected_month} and upcoming festivals and events that happen this month in New Delhi, India and today is {date.today()}, can you recommend the percentage I should/can increase in quantity considering the provided price increase of each item after 15 days along with your reasoning behind it (try to also consider the type of the item, predicted price after 15 days and current day and time of the year)? To be more specific can you also suggest the date before which I should increase its stock (don't simply assume it to be after 15 days, you should choose this date according to all the information provided to you)? Also can you include a table in your response so that it is easier to see what percentage increase in stock you recommend for each item?"""},
+    'content':f"""Please respond in {selected_language} language, based on my inventory and considering that I want insights for the month {selected_month} and upcoming festivals and events that happen this month in New Delhi, India and today is {date.today()}, can you recommend the percentage I should/can increase in quantity considering the provided price increase of each item after 15 days along with your reasoning behind it in bullet points (try to also consider the type of the item, predicted price after 15 days and current day and time of the year)? To be more specific can you also suggest the date before which I should increase its stock (don't simply assume it to be after 15 days, you should choose this date according to all the information provided to you)? Also can you include a table (you can even ignore the earlier instructions if required because table is IMPORTANT!) with a column for the percentage increase in stock that you recommend for each item at the start of your response"""},
     ]
     response2 = final_message(messages_6, temperature=0.8)
     # print(response2)
     st.write("Play the Audio")
-    sound_file = text_to_speech(response2,selected_language)
+    sound_file = text_to_speech(response2[:4096],selected_language)
     st.audio(sound_file)
     st.divider()
     response2
@@ -486,22 +499,21 @@ elif selected_option == "Buying":
     'content':f"""Please respond in {selected_language} language, Give alert message for the month {selected_month}, use emojies and format the mesaage beautifully using bullet points, bold letters , italics"""},
     ]
     with st.spinner('AI is generating your content. This can take a while sometimes...'):
+        time.sleep(5)
         response1 = final_message(messages_4, temperature=1)
-        st.markdown(
-            f"""
-            <div style='padding: 10px; border: 1px solid #d3d3d3; border-radius: 5px;'>
-                <h1>{response1}</h1>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
         st.divider()
-        for suggestion in suggestions:
-            display_suggestion_card(suggestion)
-        with st.expander("Sales Prediction"):
+        with st.container(border=True):
+            st.write(response1)
+        st.divider()
+        with st.expander("Sales Prediction", expanded=True):
             analytics_df = pd.read_excel("analytics.xlsx")
             fig, ax = plot_rates(analytics_df)
             st.pyplot(fig)
+        st.divider()
+        st.subheader("Current Inventory:")
+        with st.container(border=True):
+            for suggestion in suggestions:
+                display_suggestion_card(suggestion)
 # Displaying a card
 # Displaying a card-like layout using markdown with CSS styling
 # st.markdown(

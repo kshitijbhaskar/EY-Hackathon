@@ -1,4 +1,8 @@
 import streamlit as st
+import pandas as pd
+import seaborn as sns
+from datetime import datetime,timedelta
+import matplotlib.pyplot as plt
 # from YourApp import YourApp
 # from pages.Dashboard import Dashboard
 # from pages.AINegotiator import AINegotiator
@@ -95,10 +99,6 @@ st.sidebar.title(":white[For small businesses, Sky is the limit!]")
 # if __name__ == "__main__":
 #     main()
 
-import pandas as pd
-import seaborn as sns
-from datetime import datetime,timedelta
-import matplotlib.pyplot as plt
 
 # Read data from Excel file
 file_path = 'smart_sell.xlsx'
@@ -195,13 +195,14 @@ with st.spinner('AI is generating your content. This can take a while sometimes.
 
     response6 = client.images.generate(
     model="dall-e-3",
-    prompt="a white siamese cat",
+    prompt="Retail shop advertisement poster, try not use any text in the generated image, keep the poster minimalistic",
     size="1024x1024",
     quality="standard",
     n=1,
     )
 
-    st.write(response6)
+    image_url = response6.data[0].url
+    st.image(image_url)
     # response.stream_to_file(speech_file_path)
     # sound_file = BytesIO()
     # tts = gTTS(response, lang=language)

@@ -2,11 +2,16 @@ import streamlit as st
 import pandas as pd
 import datetime
 import numpy as np
+from twilio.rest import Client
 from openai import OpenAI
 import subprocess
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
+# Your Account SID and Auth Token from twilio.com/console
+account_sid = 'ACbc046d394f28e67d5430a662661dd8d3'
+auth_token = 'bff3a3c73653b6e5d605fcffb6cc1e8f'
+client1 = Client(account_sid, auth_token)
 
 occ = 'New year'
 a = 'Rakesh'
@@ -192,6 +197,16 @@ def generate_marketing_programs():
         """
     },
     ]
+    if use_default_poster:
+        response6 = client.images.generate(
+        model="dall-e-3",
+        prompt=F"VERY IMPORTANT: **DONT USE ANY TEXT IN THE GENERATED IMAGE/ YOU CAN USE ONLY GRAPHICS**. Generate a Retail shop advertisement poster FOR THIS MESSAGE: {final_message(messages_1, temperature=1)}, keep the poster minimalistic",
+        size="1024x1024",
+        quality="standard",
+        n=1,
+        )
+        image_url = response6.data[0].url
+        st.image(image_url)
     response = st.text_area("Edit Message:", value=final_message(messages_1, temperature=1))
     if st.button("Send message to customers" ,type="primary"):
         response = final_message(messages_1, temperature=1)

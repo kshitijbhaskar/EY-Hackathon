@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Chat</title>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('connect', function() {
+            socket.emit('my event', {data: 'I\'m connected!'});
+        });
+    </script>
+</head>
+<body>
+    <h1>Chat</h1>
+    <input id="chat-input" type="text">
+    <button id="chat-send">Send</button>
+    <ul id="chat-messages"></ul>
+
+    <script type="text/javascript" charset="utf-8">
+        document.getElementById('chat-send').onclick = function() {
+            var input = document.getElementById('chat-input');
+            socket.emit('my event', {data: input.value});
+            input.value = '';
+        };
+
+        socket.on('my response', function(msg) {
+            var li = document.createElement('li');
+            li.textContent = msg.data;
+            document.getElementById('chat-messages').appendChild(li);
+        });
+    </script>
+</body>
+</html>
